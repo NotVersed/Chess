@@ -6,8 +6,8 @@ public class GamePanel extends JPanel {
     private int gameHeight;
     private int tileWidth;
     private int tileHeight;
-
     private Board board;
+    private MouseListener mouseListener;
 
     public GamePanel(int width, int height) {
         this.gameWidth = width;
@@ -32,12 +32,17 @@ public class GamePanel extends JPanel {
         g.drawImage(image, 0, 0, this);
     }
 
-    private void draw(Graphics g) {
+    public void draw(Graphics g) {
         Tile[][] tiles = board.getTiles();
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles[0].length; j++) {
                 tiles[i][j].draw(g);
             }
+        }
+        // Draw dragged piece on top
+        if (mouseListener.getDraggedPiece() != null && mouseListener.getDragPoint() != null) {
+            Point p = mouseListener.getDragPoint();
+            //mouseListener.getDraggedPiece().dragDraw(g, p.x, p.y);
         }
     }
 
@@ -65,5 +70,9 @@ public class GamePanel extends JPanel {
         this.setPreferredSize(newSize);
         this.revalidate();
         this.repaint();
+    }
+
+    public Board getBoard() {
+        return this.board;
     }
 }
