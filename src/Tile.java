@@ -1,9 +1,13 @@
+import java.awt.*;
 
-public class Tile {
+import javax.swing.ImageIcon;
+
+public class Tile extends Rectangle{
     private Coordinate coordinate;
     private Piece piece;
     private boolean lightSquare;
-    public Tile(Coordinate coordinate, Piece piece, boolean lightSquare){
+    public Tile(int x, int y, int tileWidth, int tileHeight, Coordinate coordinate, Piece piece, boolean lightSquare){
+        super(x, y, tileWidth, tileHeight);
         this.coordinate = coordinate;
         this.piece = piece;
         this.lightSquare = lightSquare;
@@ -22,6 +26,30 @@ public class Tile {
     }
     public void setPiece(Piece piece){
         this.piece = piece;
+    }
+    public void draw(Graphics g){
+        if(this.lightSquare){
+            g.setColor(new Color(238, 238, 210));
+        }
+        else{
+            g.setColor(new Color(118, 150, 86));
+        }
+        g.fillRect(this.x, this.y, this.width, this.height);
+        if(this.piece != null){
+            drawPiece(g, this.piece);
+        }
+        
+    }
+    public void drawPiece(Graphics g, Piece piece){
+        if(this.piece instanceof Pawn){
+            Pawn pawn = (Pawn)this.piece;
+            pawn.draw(g, this);
+        }
+    }
+    public ImageIcon scaleImage(ImageIcon image, int sideLength){
+        Image original = image.getImage();
+        Image scaledImage = original.getScaledInstance(sideLength, sideLength, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaledImage);
     }
 
 }
