@@ -1,37 +1,38 @@
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
 import javax.swing.*;
 
 public class GamePanel extends JPanel {
-    private static final int GAME_WIDTH = 1000;
-    private static final int GAME_HEIGHT = 1000;
-    private static final int TILE_WIDTH = GAME_WIDTH / 8;
-    private static final int TILE_HEIGHT = GAME_HEIGHT / 8;
-    static final Dimension SCREEN_SIZE = new Dimension(GAME_WIDTH, GAME_HEIGHT);
-    Image image;
-    Graphics graphics;
-    Board board;
+    private int gameWidth;
+    private int gameHeight;
+    private int tileWidth;
+    private int tileHeight;
 
-    public GamePanel() {
-        addBoard();
+    private Board board;
+
+    public GamePanel(int width, int height) {
+        this.gameWidth = width;
+        this.gameHeight = height;
+        updateTileSize();
+        this.board = new Board(tileWidth, tileHeight);
+        this.setPreferredSize(new Dimension(gameWidth, gameHeight));
         this.setFocusable(true);
         this.addMouseListener(new MouseListener());
-        this.setPreferredSize(SCREEN_SIZE);
     }
 
-    public void addBoard() {
-        this.board = new Board();
+    private void updateTileSize() {
+        this.tileWidth = gameWidth / 8;
+        this.tileHeight = gameHeight / 8;
     }
 
+    @Override
     public void paint(Graphics g) {
-        image = createImage(getWidth(), getHeight());
-        graphics = image.getGraphics();
+        Image image = createImage(getWidth(), getHeight());
+        Graphics graphics = image.getGraphics();
         draw(graphics);
         g.drawImage(image, 0, 0, this);
     }
 
-    public void draw(Graphics g) {
+    private void draw(Graphics g) {
         Tile[][] tiles = board.getTiles();
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles[0].length; j++) {
@@ -40,19 +41,29 @@ public class GamePanel extends JPanel {
         }
     }
 
-    public static int getGameHeight() {
-        return GAME_HEIGHT;
+    public int getGameWidth() {
+        return gameWidth;
     }
 
-    public static int getGameWidth() {
-        return GAME_WIDTH;
-    }
-    public static int getTileHeight() {
-        return TILE_HEIGHT;
+    public int getGameHeight() {
+        return gameHeight;
     }
 
-    public static int getTileWidth() {
-        return TILE_WIDTH;
+    public int getTileWidth() {
+        return tileWidth;
     }
 
+    public int getTileHeight() {
+        return tileHeight;
+    }
+
+    public void resizePanel(Dimension newSize) {
+        this.gameWidth = this.getWidth();
+        this.gameHeight = this.getHeight();
+        updateTileSize();
+        board.updateTileSizes(tileWidth, tileHeight);
+        this.setPreferredSize(newSize);
+        this.revalidate();
+        this.repaint();
+    }
 }
