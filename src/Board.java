@@ -82,40 +82,10 @@ public class Board {
         return this.tiles;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < columns; col++) {
-                Piece piece = tiles[row][col].getPiece();
-                if (piece == null) {
-                    sb.append(". "); // empty square
-                } else {
-                    // Use single letter notation, uppercase = white, lowercase = black
-                    char symbol = '?';
-                    if (piece instanceof Pawn)
-                        symbol = 'P';
-                    else if (piece instanceof Rook)
-                        symbol = 'R';
-                    else if (piece instanceof Knight)
-                        symbol = 'N';
-                    else if (piece instanceof Bishop)
-                        symbol = 'B';
-                    else if (piece instanceof Queen)
-                        symbol = 'Q';
-                    else if (piece instanceof King)
-                        symbol = 'K';
-
-                    if (piece.isWhite()) {
-                        sb.append(symbol).append(" ");
-                    } else {
-                        sb.append(Character.toLowerCase(symbol)).append(" ");
-                    }
-                }
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
+    public Piece getPieceAt(int row, int col){
+        return tiles[row][col].getPiece();
     }
+
+   
 
 }
