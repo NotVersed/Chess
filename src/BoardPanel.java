@@ -55,4 +55,7 @@ public class BoardPanel extends JLayeredPane {
     public Board getBoard() {
         return this.board;
     }
+    public PiecePanel[][] getPiecePanels(){
+        return this.piecePanels;
+    }
 }

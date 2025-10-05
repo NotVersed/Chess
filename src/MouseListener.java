@@ -30,11 +30,18 @@ public class MouseListener extends MouseAdapter {
         BoardPanel parent = (BoardPanel) piece.getParent();
         parent.setLayer(piece, JLayeredPane.PALETTE_LAYER);
         Board board = parent.getBoard();
+        PiecePanel[][] piecePanels = parent.getPiecePanels();
 
         Point boardPoint = SwingUtilities.convertPoint(piece, e.getPoint(), parent);
-        int tileSize = parent.getWidth() / board.getColumns(); 
+        int tileSize = parent.getWidth() / board.getColumns();
         int col = Math.min(board.getColumns() - 1, boardPoint.x / tileSize);
         int row = Math.min(board.getRows() - 1, boardPoint.y / tileSize);
+        PiecePanel targetPiece = piecePanels[row][col];
+        if (targetPiece != null) {
+            parent.remove(targetPiece);
+        }
+        parent.getPiecePanels()[row][col] = piece;
         piece.setBounds(col * tileSize, row * tileSize, tileSize, tileSize);
+        parent.repaint();
     }
 }
