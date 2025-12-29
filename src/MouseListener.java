@@ -3,11 +3,11 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public class MouseListener extends MouseAdapter {
-    private PiecePanel piece;
+    private final PiecePanel PIECE;
     private int offsetX, offsetY;
 
     public MouseListener(PiecePanel piece) {
-        this.piece = piece;
+        this.PIECE = piece;
     }
 
     @Override
@@ -15,24 +15,24 @@ public class MouseListener extends MouseAdapter {
         offsetX = e.getX();
         offsetY = e.getY();
 
-        JLayeredPane parent = (JLayeredPane) piece.getParent();
-        parent.setLayer(piece, JLayeredPane.DRAG_LAYER);
+        JLayeredPane parent = (JLayeredPane) PIECE.getParent();
+        parent.setLayer(this.PIECE, JLayeredPane.DRAG_LAYER);
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        Point mousePoint = SwingUtilities.convertPoint(piece, e.getPoint(), piece.getParent());
-        piece.setLocation(mousePoint.x - offsetX, mousePoint.y - offsetY);
+        Point mousePoint = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), PIECE.getParent());
+        PIECE.setLocation(mousePoint.x - offsetX, mousePoint.y - offsetY);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        BoardPanel parent = (BoardPanel) piece.getParent();
-        parent.setLayer(piece, JLayeredPane.PALETTE_LAYER);
+        BoardPanel parent = (BoardPanel) PIECE.getParent();
+        parent.setLayer(this.PIECE, JLayeredPane.PALETTE_LAYER);
         Board board = parent.getBoard();
         PiecePanel[][] piecePanels = parent.getPiecePanels();
 
-        Point boardPoint = SwingUtilities.convertPoint(piece, e.getPoint(), parent);
+        Point boardPoint = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), parent);
         int tileSize = parent.getWidth() / board.getColumns();
         int col = Math.min(board.getColumns() - 1, boardPoint.x / tileSize);
         int row = Math.min(board.getRows() - 1, boardPoint.y / tileSize);
@@ -40,8 +40,8 @@ public class MouseListener extends MouseAdapter {
         if (targetPiece != null) {
             parent.remove(targetPiece);
         }
-        parent.getPiecePanels()[row][col] = piece;
-        piece.setBounds(col * tileSize, row * tileSize, tileSize, tileSize);
+        parent.getPiecePanels()[row][col] = PIECE;
+        PIECE.setBounds(col * tileSize, row * tileSize, tileSize, tileSize);
         parent.repaint();
     }
 }

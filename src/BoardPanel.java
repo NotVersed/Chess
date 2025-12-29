@@ -2,47 +2,47 @@ import java.awt.*;
 import javax.swing.*;
 
 public class BoardPanel extends JLayeredPane {
-    private TilePanel[][] tilePanels;
-    private PiecePanel[][] piecePanels;
-    private Board board;
+    private final TilePanel[][] TILEPANELS;
+    private final PiecePanel[][] PIECEPANELS;
+    private final Board BOARD;
 
     public BoardPanel() {
-        this.board = new Board();
-        tilePanels = new TilePanel[board.getRows()][board.getColumns()];
-        piecePanels = new PiecePanel[board.getRows()][board.getColumns()];
+        this.BOARD = new Board();
+        TILEPANELS = new TilePanel[BOARD.getRows()][BOARD.getColumns()];
+        PIECEPANELS = new PiecePanel[BOARD.getRows()][BOARD.getColumns()];
         setLayout(null);
         setPreferredSize(new Dimension(800, 800));
         addTilePanels();
         refreshPieces();
     }
 
-    public void addTilePanels() {
-        int rows = board.getRows();
-        int cols = board.getColumns();
+    private void addTilePanels() {
+        int rows = BOARD.getRows();
+        int cols = BOARD.getColumns();
         int tileSize = getPreferredSize().width / cols;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                Tile tile = board.getTiles()[i][j];
+                Tile tile = BOARD.getTiles()[i][j];
                 TilePanel tilePanel = new TilePanel(tile.getColor());
                 tilePanel.setBounds(j * tileSize, i * tileSize, tileSize, tileSize);
-                tilePanels[i][j] = tilePanel;
+                TILEPANELS[i][j] = tilePanel;
                 add(tilePanel, JLayeredPane.DEFAULT_LAYER);
             }
         }
     }
 
-    public void refreshPieces() {
-        int rows = board.getRows();
-        int cols = board.getColumns();
+    private void refreshPieces() {
+        int rows = BOARD.getRows();
+        int cols = BOARD.getColumns();
         int tileSize = getPreferredSize().width / cols;
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                Piece piece = board.getPieceAt(i, j);
+                Piece piece = BOARD.getPieceAt(i, j);
                 if (piece != null) {
                     PiecePanel piecePanel = new PiecePanel(piece);
                     piecePanel.setBounds(j * tileSize, i * tileSize, tileSize, tileSize);
-                    piecePanels[i][j] = piecePanel;
+                    PIECEPANELS[i][j] = piecePanel;
                     MouseListener listener = new MouseListener(piecePanel);
                     piecePanel.addMouseListener(listener);
                     piecePanel.addMouseMotionListener(listener);
@@ -53,9 +53,9 @@ public class BoardPanel extends JLayeredPane {
     }
 
     public Board getBoard() {
-        return this.board;
+        return this.BOARD;
     }
     public PiecePanel[][] getPiecePanels(){
-        return this.piecePanels;
+        return this.PIECEPANELS;
     }
 }
