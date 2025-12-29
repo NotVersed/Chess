@@ -3,11 +3,11 @@ import javax.swing.JFrame;
 
 public class GameFrame extends JFrame{
 
-    private BoardPanel panel;
+    private final BoardPanel PANEL;
 
     public GameFrame(){
-        this.panel = new BoardPanel();
-        this.add(panel);
+        this.PANEL = new BoardPanel();
+        this.add(PANEL);
         this.setTitle("Chess Game");
 		this.setBackground(Color.WHITE);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
