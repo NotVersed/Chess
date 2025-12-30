@@ -2,10 +2,10 @@ import java.awt.*;
 import javax.swing.*;
 
 public class TilePanel extends JPanel {
-    private Color color;
+    private final Color COLOR;
 
-    public TilePanel(Color color) {
-        this.color = color;
+    public TilePanel(final Color COLOR) {
+        this.COLOR = COLOR;
         setLayout(null);
     }
 
@@ -13,7 +13,7 @@ public class TilePanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        g.setColor(color);
+        g.setColor(COLOR);
         g.fillRect(0, 0, getWidth(), getHeight());
     }
 }

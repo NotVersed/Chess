@@ -57,7 +57,7 @@ public class Board {
     private void initializeTiles() {
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles[0].length; j++) {
-                tiles[i][j] = new Tile(null, (j + i) % 2 == 0);
+                tiles[i][j] = new Tile(null, (j + i) % 2 == 0, new Coordinate(i, j));
             }
         }
     }
