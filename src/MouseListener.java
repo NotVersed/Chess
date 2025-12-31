@@ -1,10 +1,13 @@
+
 import java.awt.Point;
 import java.awt.event.*;
 import javax.swing.*;
 
 public class MouseListener extends MouseAdapter {
+
     private final PiecePanel PIECE;
     private int offsetX, offsetY;
+    private Coordinate origin;
 
     public MouseListener(PiecePanel piece) {
         this.PIECE = piece;
@@ -12,10 +15,11 @@ public class MouseListener extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
+        BoardPanel parent = (BoardPanel) PIECE.getParent();
+        Point p = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), parent);
+        origin = parent.screenToBoard(p);
         offsetX = e.getX();
         offsetY = e.getY();
-
-        JLayeredPane parent = (JLayeredPane) PIECE.getParent();
         parent.setLayer(this.PIECE, JLayeredPane.DRAG_LAYER);
     }
 
@@ -28,20 +32,12 @@ public class MouseListener extends MouseAdapter {
     @Override
     public void mouseReleased(MouseEvent e) {
         BoardPanel parent = (BoardPanel) PIECE.getParent();
-        parent.setLayer(this.PIECE, JLayeredPane.PALETTE_LAYER);
-        Board board = parent.getBoard();
-        PiecePanel[][] piecePanels = parent.getPiecePanels();
+        parent.setLayer(PIECE, JLayeredPane.PALETTE_LAYER);
 
-        Point boardPoint = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), parent);
-        int tileSize = parent.getWidth() / board.getColumns();
-        int col = Math.min(board.getColumns() - 1, boardPoint.x / tileSize);
-        int row = Math.min(board.getRows() - 1, boardPoint.y / tileSize);
-        PiecePanel targetPiece = piecePanels[row][col];
-        if (targetPiece != null) {
-            parent.remove(targetPiece);
-        }
-        parent.getPiecePanels()[row][col] = PIECE;
-        PIECE.setBounds(col * tileSize, row * tileSize, tileSize, tileSize);
-        parent.repaint();
+        Point p = SwingUtilities.convertPoint(PIECE, e.getPoint(), parent);
+        Coordinate target = parent.screenToBoard(p);
+
+        //parent.getController().onMoveAttempt(origin, target);
     }
+
 }

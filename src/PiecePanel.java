@@ -6,7 +6,7 @@ public class PiecePanel extends JPanel {
     private final Image IMAGE;
 
     public PiecePanel(Piece piece) {
-        this.IMAGE = piece.getPieceImage().getImage();
+        this.IMAGE = PieceImage.getPieceImage(piece).getImage();
         setOpaque(false);
     }
     @Override

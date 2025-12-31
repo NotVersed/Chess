@@ -1,21 +1,41 @@
-public class Coordinate {
-    private int x;
-    private int y;
-    public Coordinate(int x, int y){
+
+import java.util.Objects;
+
+public final class Coordinate {
+
+    private final int x;
+    private final int y;
+
+    public Coordinate(int x, int y) {
+        // x represents file
+        // y represents rank
         this.x = x;
         this.y = y;
     }
-    public int getX(){
+
+    public int getX() {
         return this.x;
     }
-    public int getY(){
+
+    public int getY() {
         return this.y;
     }
-    public void setX(int x){
-        this.x = x;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Coordinate)) {
+            return false;
+        }
+        Coordinate c = (Coordinate) o;
+        return x == c.x && y == c.y;
     }
-    public void setY(int y){
-        this.y = y;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 
 }
