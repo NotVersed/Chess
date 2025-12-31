@@ -7,4 +7,5 @@ public class Move {
         this.SOURCE = SOURCE;
         this.DESTINATION = DESTINATION;
     }
+    
 }
