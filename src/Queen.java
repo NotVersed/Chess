@@ -1,12 +1,24 @@
 
-public class Queen extends Piece{
-    public Queen(Coordinate coordinate, boolean whitePiece){
+public class Queen extends Piece {
+    private static final int[][] QUEEN_OFFSETS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { 1, -1 },
+            { -1, 1 }, { -1, -1 } };
+
+    public Queen(Coordinate coordinate, boolean whitePiece) {
         super(coordinate, whitePiece);
     }
 
     @Override
     protected void generatePossibleMoves() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generatePossibleMoves'");
+        Coordinate source = this.getCoordinate();
+        int x = source.getX();
+        int y = source.getY();
+        int boardDimension = 8;
+        for (int i = 1; i < boardDimension; i++) {
+            for (int[] offset : QUEEN_OFFSETS) {
+                int dx = offset[0] * i;
+                int dy = offset[1] * i;
+                this.possibleMoves.add(new Move(source, new Coordinate(x + dx, y + dy)));
+            }
+        }
     }
 }

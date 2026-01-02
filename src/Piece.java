@@ -28,4 +28,10 @@ public abstract class Piece {
     }
     protected abstract void generatePossibleMoves();
 
+    public List<Move> getPossibleMoves(){
+        this.possibleMoves.clear();
+        generatePossibleMoves();
+        return this.possibleMoves;
+    }
+
 }
