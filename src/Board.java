@@ -1,17 +1,11 @@
+import java.util.Map;
+import java.util.HashMap;
 
-import java.util.ArrayList;
-
-/**
- * The purpose of this class is to create a board object The board object holds
- * row x col tiles
- */
 public class Board {
 
-    private Tile[][] tiles;
-    private ArrayList<Piece> pieces;
-    private ArrayList<Move> moves;
-    private int rows;
-    private int columns;
+    private final Map<Coordinate, Piece> board;
+    private final int rows;
+    private final int columns;
 
     public Board() {
         this(8, 8);
@@ -20,127 +14,62 @@ public class Board {
     public Board(int rows, int columns) {
         this.rows = rows;
         this.columns = columns;
-        this.tiles = new Tile[this.rows][this.columns];
-        this.pieces = new ArrayList<>();
-        this.moves = new ArrayList<>();
-        initializeTiles();
-        initializePieces();
+        this.board = new HashMap<>();
+        initializeBoard();
     }
 
-    private void initializePieces() {
+    private void initializeBoard() {
         // Pawns
         for (int col = 0; col < columns; col++) {
-            Pawn whitePawn = new Pawn(new Coordinate(col, 1), true);
-            Pawn blackPawn = new Pawn(new Coordinate(col, 6), false);
-            pieces.add(whitePawn);
-            pieces.add(blackPawn);
-            tiles[col][6].setPiece(blackPawn);
-            tiles[col][1].setPiece(whitePawn);
+            board.put(new Coordinate(col, 1), new Pawn(new Coordinate(col, 1), true));
+            board.put(new Coordinate(col, 6), new Pawn(new Coordinate(col, 6), false));
         }
 
         // Rooks
-        Rook whiteRookOne = new Rook(new Coordinate(0, 0), true);
-        Rook whiteRookTwo = new Rook(new Coordinate(7, 0), true);
-        Rook blackRookOne = new Rook(new Coordinate(0, 7), false);
-        Rook blackRookTwo = new Rook(new Coordinate(7, 7), false);
-        pieces.add(blackRookOne);
-        pieces.add(blackRookTwo);
-        pieces.add(whiteRookOne);
-        pieces.add(whiteRookTwo);
-        tiles[0][7].setPiece(blackRookOne);
-        tiles[7][7].setPiece(blackRookTwo);
-        tiles[0][0].setPiece(whiteRookOne);
-        tiles[7][0].setPiece(whiteRookTwo);
+        board.put(new Coordinate(0, 0), new Rook(new Coordinate(0, 0), true));
+        board.put(new Coordinate(7, 0), new Rook(new Coordinate(7, 0), true));
+        board.put(new Coordinate(0, 7), new Rook(new Coordinate(0, 7), false));
+        board.put(new Coordinate(7, 7), new Rook(new Coordinate(7, 7), false));
 
         // Knights
-        Knight whiteKnightOne = new Knight(new Coordinate(1, 0), true);
-        Knight whiteKnightTwo = new Knight(new Coordinate(6, 0), true);
-        Knight blackKnightOne = new Knight(new Coordinate(1, 7), false);
-        Knight blackKnightTwo = new Knight(new Coordinate(6, 7), false);
-        pieces.add(whiteKnightOne);
-        pieces.add(whiteKnightTwo);
-        pieces.add(blackKnightOne);
-        pieces.add(blackKnightTwo);
-        tiles[1][7].setPiece(blackKnightOne);
-        tiles[6][7].setPiece(blackKnightTwo);
-        tiles[1][0].setPiece(whiteKnightOne);
-        tiles[6][0].setPiece(whiteKnightTwo);
+        board.put(new Coordinate(1, 0), new Knight(new Coordinate(1, 0), true));
+        board.put(new Coordinate(6, 0), new Knight(new Coordinate(6, 0), true));
+        board.put(new Coordinate(1, 7), new Knight(new Coordinate(1, 7), false));
+        board.put(new Coordinate(6, 7), new Knight(new Coordinate(6, 7), false));
 
         // Bishops
-        Bishop whiteBishopOne = new Bishop(new Coordinate(2, 0), true);
-        Bishop whiteBishopTwo = new Bishop(new Coordinate(5, 0), true);
-        Bishop blackBishopOne = new Bishop(new Coordinate(2, 7), false);
-        Bishop blackBishopTwo = new Bishop(new Coordinate(5, 7), false);
-        pieces.add(whiteBishopOne);
-        pieces.add(whiteBishopTwo);
-        pieces.add(blackBishopOne);
-        pieces.add(blackBishopTwo);
-        tiles[2][7].setPiece(blackBishopOne);
-        tiles[5][7].setPiece(blackBishopTwo);
-        tiles[2][0].setPiece(whiteBishopOne);
-        tiles[5][0].setPiece(whiteBishopTwo);
+        board.put(new Coordinate(2, 0), new Bishop(new Coordinate(2, 0), true));
+        board.put(new Coordinate(5, 0), new Bishop(new Coordinate(5, 0), true));
+        board.put(new Coordinate(2, 7), new Bishop(new Coordinate(2, 7), false));
+        board.put(new Coordinate(5, 7), new Bishop(new Coordinate(5, 7), false));
 
         // Queens
-        Queen whiteQueen = new Queen(new Coordinate(3, 0), true);
-        Queen blackQueen = new Queen(new Coordinate(3, 7), false);
-        pieces.add(whiteQueen);
-        pieces.add(blackQueen);
-        tiles[3][7].setPiece(blackQueen);
-        tiles[3][0].setPiece(whiteQueen);
+        board.put(new Coordinate(3, 0), new Queen(new Coordinate(3, 0), true));
+        board.put(new Coordinate(3, 7), new Queen(new Coordinate(3, 7), false));
 
         // Kings
-        King whiteKing = new King(new Coordinate(4, 0), true);
-        King blackKing = new King(new Coordinate(4, 7), false);
-        pieces.add(whiteKing);
-        pieces.add(blackKing);
-        tiles[4][7].setPiece(blackKing);
-        tiles[4][0].setPiece(whiteKing);
+        board.put(new Coordinate(4, 0), new King(new Coordinate(4, 0), true));
+        board.put(new Coordinate(4, 7), new King(new Coordinate(4, 7), false));
     }
 
-    private void initializeTiles() {
-        for (int i = 0; i < tiles.length; i++) {
-            for (int j = 0; j < tiles[0].length; j++) {
-                tiles[i][j] = new Tile(null, (j + i) % 2 == 0, new Coordinate(i, j));
-            }
-        }
+    public boolean inBounds(Coordinate c) {
+        return c.getX() >= 0 && c.getX() < rows
+            && c.getY() >= 0 && c.getY() < columns;
     }
 
-    private boolean inBounds(Coordinate coordinate) {
-        int x = coordinate.getX();
-        int y = coordinate.getY();
-        return x >= 0 && x < this.rows && y >= 0 && y < this.columns;
+    public boolean isOccupied(Coordinate c) {
+        return board.containsKey(c);
     }
 
-    private boolean tileOccupied(Tile tile) {
-        return tile.getPiece() != null;
-    }
-
-    public void generateLegalMoves() {
-
+    public Piece getPieceAt(Coordinate c) {
+        return board.get(c);
     }
 
     public int getRows() {
-        return this.rows;
+        return rows;
     }
 
     public int getColumns() {
-        return this.columns;
+        return columns;
     }
-
-    public void setRows(int rows) {
-        this.rows = rows;
-    }
-
-    public void setColumns(int columns) {
-        this.columns = columns;
-    }
-
-    public Tile[][] getTiles() {
-        return this.tiles;
-    }
-
-    public Piece getPieceAt(int row, int col) {
-        return tiles[row][col].getPiece();
-    }
-
 }
