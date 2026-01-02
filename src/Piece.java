@@ -31,7 +31,7 @@ public abstract class Piece {
     public List<Move> getPossibleMoves(){
         this.possibleMoves.clear();
         generatePossibleMoves();
-        return this.possibleMoves;
+        return List.copyOf(this.possibleMoves);
     }
 
 }
