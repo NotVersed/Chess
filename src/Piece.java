@@ -3,18 +3,18 @@ import java.util.List;
 
 public abstract class Piece {
 
-    private boolean whitePiece;
+    private final boolean WHITEPIECE;
     private boolean hasMoved;
     private Coordinate coordinate;
     protected List<Move> possibleMoves;
 
     public Piece(Coordinate coordinate, boolean whitePiece){
-        this.whitePiece = whitePiece;
+        this.WHITEPIECE = whitePiece;
         this.coordinate = coordinate;
         this.possibleMoves = new ArrayList<>();
     }
     public boolean isWhite(){
-        return this.whitePiece;
+        return this.WHITEPIECE;
     }
     public boolean hasMoved(){
         return this.hasMoved;

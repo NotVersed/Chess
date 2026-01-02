@@ -7,6 +7,9 @@ public class Pawn extends Piece {
         direction = (this.isWhite()) ? 1 : -1;
     }
 
+    public int getDirection(){
+        return this.direction;
+    }
     @Override
     protected void generatePossibleMoves() {
         // get source coordinate
