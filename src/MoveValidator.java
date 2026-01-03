@@ -1,5 +1,6 @@
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,31 +10,30 @@ import java.util.Set;
 public final class MoveValidator {
 
     private final Board BOARD;
+    private final Map<Coordinate, Piece> BOARDSTATE;
     private Coordinate enPassantTarget;
-    private Map<Coordinate, Piece> boardState;
     Set<Coordinate> whiteControlled;
     Set<Coordinate> blackControlled;
 
     public MoveValidator(Board BOARD, Coordinate enPassantTarget) {
         this.BOARD = BOARD;
         this.enPassantTarget = enPassantTarget;
-        this.boardState = BOARD.getBoardState();
+        this.BOARDSTATE = BOARD.getBoardState();
         whiteControlled = new HashSet<>();
         blackControlled = new HashSet<>();
     };
-
-    private void updateBoardState() {
-        this.boardState = BOARD.getBoardState();
-    }
 
     // only derive state based on the boardState do not use Piece.getCoordinate() it
     // is
     // only for the piece to determine its own legal moves
     public Map<Piece, List<Move>> generateLegalMoves() {
         Map<Piece, List<Move>> legalMoves = new HashMap<>();
+        generateControlledSquares();
+        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+            Coordinate source = entry.getKey();
+            Piece piece = entry.getValue();
 
-        for (Piece piece : boardState.values()) {
-            List<Move> pseudoMoves = piece.getPossibleMoves();
+            List<Move> pseudoMoves = piece.getPossibleMovesFrom(source);
             List<Move> validatedMoves;
 
             if (piece instanceof Pawn) {
@@ -44,13 +44,25 @@ public final class MoveValidator {
                 validatedMoves = validateRays(pseudoMoves);
             } else if (piece instanceof King) {
                 validatedMoves = validateKingMoves(pseudoMoves);
-                King king = (King) piece;
-                validatedMoves.addAll(castlingMoves(king));
+                validatedMoves.addAll(castlingMoves((King) piece));
             } else {
-                continue;
+                throw new IllegalStateException("Unknown piece type: " + piece.getClass());
             }
-            if (!validatedMoves.isEmpty()) {
-                legalMoves.put(piece, validatedMoves);
+
+            List<Move> safeMoves = new ArrayList<>();
+
+            for (Move move : validatedMoves) {
+                UndoMove undo = BOARD.applyMove(move);
+                boolean illegal = wouldLeaveKingInCheck(piece.isWhite());
+                BOARD.undoMove(undo);
+
+                if (!illegal) {
+                    safeMoves.add(move);
+                }
+            }
+
+            if (!safeMoves.isEmpty()) {
+                legalMoves.put(piece, safeMoves);
             }
         }
 
@@ -65,7 +77,7 @@ public final class MoveValidator {
         }
 
         Coordinate source = pieceMoves.get(0).getSource();
-        Piece movingPiece = boardState.get(source);
+        Piece movingPiece = BOARDSTATE.get(source);
 
         Map<String, List<Move>> rays = new HashMap<>();
 
@@ -99,7 +111,7 @@ public final class MoveValidator {
 
             for (Move move : ray) {
                 Coordinate destination = move.getDestination();
-                Piece occupying = boardState.get(destination);
+                Piece occupying = BOARDSTATE.get(destination);
 
                 if (occupying == null) {
                     legalMoves.add(move);
@@ -122,13 +134,13 @@ public final class MoveValidator {
         if (pseudoLegalMoves.isEmpty()) {
             return legalMoves;
         }
-        Piece knight = boardState.get(pseudoLegalMoves.get(0).getSource());
+        Piece knight = BOARDSTATE.get(pseudoLegalMoves.get(0).getSource());
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
             if (!BOARD.inBounds(destination))
                 continue;
-            Piece occupyingPiece = boardState.get(destination);
+            Piece occupyingPiece = BOARDSTATE.get(destination);
             if (occupyingPiece == null || !isAlly(knight, occupyingPiece)) {
                 legalMoves.add(move);
             }
@@ -144,13 +156,13 @@ public final class MoveValidator {
             return legalMoves;
         }
 
-        Piece king = boardState.get(pseudoLegalMoves.get(0).getSource());
+        Piece king = BOARDSTATE.get(pseudoLegalMoves.get(0).getSource());
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
             if (!BOARD.inBounds(destination))
                 continue;
-            Piece occupyingPiece = boardState.get(destination);
+            Piece occupyingPiece = BOARDSTATE.get(destination);
 
             if (occupyingPiece == null || !isAlly(king, occupyingPiece)) {
                 legalMoves.add(move);
@@ -167,7 +179,7 @@ public final class MoveValidator {
             return legalMoves;
         }
 
-        Piece piece = boardState.get(pseudoLegalMoves.get(0).getSource());
+        Piece piece = BOARDSTATE.get(pseudoLegalMoves.get(0).getSource());
         Pawn pawn = (Pawn) piece;
         Coordinate source = pseudoLegalMoves.get(0).getSource();
         int direction = pawn.getDirection();
@@ -176,7 +188,7 @@ public final class MoveValidator {
             Coordinate destination = move.getDestination();
             if (!BOARD.inBounds(destination))
                 continue;
-            Piece occupyingPiece = boardState.get(destination);
+            Piece occupyingPiece = BOARDSTATE.get(destination);
 
             int dx = destination.getX() - source.getX();
             int dy = destination.getY() - source.getY();
@@ -189,7 +201,7 @@ public final class MoveValidator {
                 } // Two squares forward
                 else if (dy == 2 * direction && !pawn.hasMoved() && occupyingPiece == null) {
                     Coordinate intermediate = new Coordinate(source.getX(), source.getY() + direction);
-                    if (boardState.get(intermediate) == null) {
+                    if (BOARDSTATE.get(intermediate) == null) {
                         legalMoves.add(move);
                     }
                 }
@@ -200,7 +212,7 @@ public final class MoveValidator {
                 } // en passant
                 else if (occupyingPiece == null && enPassantTarget != null && destination.equals(enPassantTarget)) {
                     Coordinate capturedSquare = new Coordinate(destination.getX(), destination.getY() - direction);
-                    Piece capturedPiece = boardState.get(capturedSquare);
+                    Piece capturedPiece = BOARDSTATE.get(capturedSquare);
                     if (capturedPiece instanceof Pawn && !isAlly(pawn, capturedPiece)) {
                         legalMoves.add(move);
                     }
@@ -212,17 +224,8 @@ public final class MoveValidator {
 
     private List<Move> castlingMoves(King king) {
         List<Move> castlingMoves = new ArrayList<>();
-        Coordinate coordinate = null;
-        if (boardState.get(king.getCoordinate()) == king) {
-            coordinate = king.getCoordinate();
-        } else {
-            for (Coordinate c : boardState.keySet()) {
-                Piece piece = boardState.get(c);
-                if (piece != king)
-                    continue;
-                coordinate = c;
-            }
-        }
+        Set<Coordinate> enemyControl = king.isWhite() ? blackControlled : whiteControlled;
+        Coordinate coordinate = findPiece(king);
         if (king.hasMoved()) {
             return castlingMoves;
         }
@@ -231,16 +234,24 @@ public final class MoveValidator {
 
         // ---------- King-side castling ----------
         Coordinate kingSideRookSquare = new Coordinate(coordinate.getX() + 3, y);
-        Piece rook = boardState.get(kingSideRookSquare);
-
-        if (rook instanceof Rook && !rook.hasMoved()) {
+        Piece rook = BOARDSTATE.get(kingSideRookSquare);
+        Coordinate start = coordinate;
+        Coordinate through = new Coordinate(start.getX() + 1, start.getY());
+        Coordinate end = new Coordinate(start.getX() + 2, start.getY());
+        if (rook instanceof Rook && !rook.hasMoved() && rook.isWhite() == king.isWhite()) {
             boolean pathClear = true;
 
             for (int x = coordinate.getX() + 1; x < kingSideRookSquare.getX(); x++) {
-                if (boardState.containsKey(new Coordinate(x, y))) {
+                Coordinate c = new Coordinate(x, y);
+                if (BOARDSTATE.containsKey(c)) {
                     pathClear = false;
                     break;
                 }
+            }
+            if (enemyControl.contains(start) ||
+                    enemyControl.contains(through) ||
+                    enemyControl.contains(end)) {
+                pathClear = false;
             }
 
             if (pathClear) {
@@ -250,16 +261,24 @@ public final class MoveValidator {
 
         // ---------- Queen-side castling ----------
         Coordinate queenSideRookSquare = new Coordinate(coordinate.getX() - 4, y);
-        rook = boardState.get(queenSideRookSquare);
-
-        if (rook instanceof Rook && !rook.hasMoved()) {
+        rook = BOARDSTATE.get(queenSideRookSquare);
+        start = coordinate;
+        through = new Coordinate(start.getX() - 1, start.getY());
+        end = new Coordinate(start.getX() - 2, start.getY());
+        if (rook instanceof Rook && !rook.hasMoved() && rook.isWhite() == king.isWhite()) {
             boolean pathClear = true;
 
             for (int x = coordinate.getX() - 1; x > queenSideRookSquare.getX(); x--) {
-                if (boardState.containsKey(new Coordinate(x, y))) {
+                Coordinate c = new Coordinate(x, y);
+                if (BOARDSTATE.containsKey(c)) {
                     pathClear = false;
                     break;
                 }
+            }
+            if (enemyControl.contains(start) ||
+                    enemyControl.contains(through) ||
+                    enemyControl.contains(end)) {
+                pathClear = false;
             }
 
             if (pathClear) {
@@ -269,35 +288,49 @@ public final class MoveValidator {
         return castlingMoves;
     }
 
+    private Coordinate findPiece(Piece target) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+            if (entry.getValue() == target) {
+                return entry.getKey();
+            }
+        }
+        throw new IllegalStateException("Piece not found in boardState: " + target);
+    }
+
     private boolean isAlly(Piece piece1, Piece piece2) {
         return piece1.isWhite() == piece2.isWhite();
     }
 
-    private King[] getKings() {
-        King[] kings = new King[2];
-        for (Coordinate c : boardState.keySet()) {
-            if (boardState.get(c) instanceof King) {
-                King king = (King) boardState.get(c);
-                if (king.isWhite())
-                    kings[0] = king;
-                else {
-                    kings[1] = king;
-                }
+    private Coordinate getKing(boolean white) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+            if (entry.getValue() instanceof King &&
+                    entry.getValue().isWhite() == white) {
+                return entry.getKey();
             }
-            if (kings[0] != null && kings[1] != null)
-                return kings;
         }
-        return kings;
+        throw new IllegalStateException("King not found: " + (white ? "white" : "black"));
     }
 
-    private boolean wouldLeaveKingInCheck() {
-        return false;
+    private boolean wouldLeaveKingInCheck(boolean movingWhite) {
+        // Recompute attack maps for the current boardState
+        generateControlledSquares();
+
+        // Find the moving side's king square (authoritative from boardState)
+        Coordinate kingSquare = getKing(movingWhite);
+
+        // If white just moved, black's controlled squares matter
+        if (movingWhite) {
+            return blackControlled.contains(kingSquare);
+        }
+
+        // If black just moved, white's controlled squares matter
+        return whiteControlled.contains(kingSquare);
     }
 
     private void generateControlledSquares() {
         whiteControlled.clear();
         blackControlled.clear();
-        for (Map.Entry<Coordinate, Piece> entry : boardState.entrySet()) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
             Coordinate source = entry.getKey();
             Piece piece = entry.getValue();
             addControlledSquares(piece, source);
@@ -311,10 +344,10 @@ public final class MoveValidator {
         } else if (piece instanceof Queen || piece instanceof Rook || piece instanceof Bishop) {
             addSlidingPieceControlledSquare(piece, source);
         } else if (piece instanceof Knight) {
-            Knight knight = (Knight)piece;
+            Knight knight = (Knight) piece;
             addKnightControlledSquares(knight, source);
         } else if (piece instanceof King) {
-            King king = (King)piece;
+            King king = (King) piece;
             addKingControlledSquare(king, source);
         } else {
             throw new IllegalStateException("Piece type unknown: " + piece.getClass());
@@ -326,33 +359,50 @@ public final class MoveValidator {
         Set<Coordinate> target = pawn.isWhite() ? whiteControlled : blackControlled;
         Coordinate controlledLeft = new Coordinate(source.getX() - 1, source.getY() + direction);
         Coordinate controlledRight = new Coordinate(source.getX() + 1, source.getY() + direction);
-        if(BOARD.inBounds(controlledLeft))target.add(controlledLeft);
-        if(BOARD.inBounds(controlledRight))target.add(controlledRight);
+        if (BOARD.inBounds(controlledLeft))
+            target.add(controlledLeft);
+        if (BOARD.inBounds(controlledRight))
+            target.add(controlledRight);
     }
-    private void addKnightControlledSquares(Knight knight, Coordinate source){
+
+    private void addKnightControlledSquares(Knight knight, Coordinate source) {
         Set<Coordinate> target = knight.isWhite() ? whiteControlled : blackControlled;
         List<Move> possibleKnightMoves = knight.getPossibleMovesFrom(source);
-        for(Move move : possibleKnightMoves){
+        for (Move move : possibleKnightMoves) {
             Coordinate coordinate = move.getDestination();
-            if(BOARD.inBounds(coordinate))target.add(coordinate);
+            if (BOARD.inBounds(coordinate))
+                target.add(coordinate);
         }
     }
-    private void addKingControlledSquare(King king, Coordinate source){
+
+    private void addKingControlledSquare(King king, Coordinate source) {
         Set<Coordinate> target = king.isWhite() ? whiteControlled : blackControlled;
         List<Move> possibleKingMoves = king.getPossibleMovesFrom(source);
-        for(Move move : possibleKingMoves){
-            int dx = Math.abs(move.getSource().getX() - move.getDestination().getX());
-            if(dx == 2) continue;
+        for (Move move : possibleKingMoves) {
+            int dx = Math.abs(source.getX() - move.getDestination().getX());
+            if (dx == 2)
+                continue;
             Coordinate coordinate = move.getDestination();
-            if(BOARD.inBounds(coordinate))target.add(coordinate);
+            if (BOARD.inBounds(coordinate))
+                target.add(coordinate);
         }
     }
-    private void addSlidingPieceControlledSquare(Piece piece, Coordinate source){
+
+    private void addSlidingPieceControlledSquare(Piece piece, Coordinate source) {
         Set<Coordinate> target = piece.isWhite() ? whiteControlled : blackControlled;
         List<Move> possibleMoves = validateRays(piece.getPossibleMovesFrom(source));
-        for(Move move: possibleMoves){
+        for (Move move : possibleMoves) {
             target.add(move.getDestination());
         }
+    }
+
+    public Set<Coordinate> getControlledSquares(boolean white){
+        generateControlledSquares();
+        return Collections.unmodifiableSet(white ? whiteControlled : blackControlled);
+
+    }
+    public void setEnPassantTarget(Coordinate coordinate){
+        this.enPassantTarget = coordinate;
     }
 
 }

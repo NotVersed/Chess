@@ -19,8 +19,8 @@ public abstract class Piece {
     public boolean hasMoved(){
         return this.hasMoved;
     }
-    public void setPieceMoved(){
-        this.hasMoved = true;
+    public void setPieceMoved(boolean hasMoved){
+        this.hasMoved = hasMoved;
     }
     public Coordinate getCoordinate(){
         return this.coordinate;
