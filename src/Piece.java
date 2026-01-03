@@ -19,6 +19,9 @@ public abstract class Piece {
     public boolean hasMoved(){
         return this.hasMoved;
     }
+    public void setPieceMoved(){
+        this.hasMoved = true;
+    }
     public Coordinate getCoordinate(){
         return this.coordinate;
     }
@@ -27,10 +30,16 @@ public abstract class Piece {
         this.hasMoved = true;
     }
     protected abstract void generatePossibleMoves();
+    protected abstract void generatePossibleMovesFrom(Coordinate source);
 
     public List<Move> getPossibleMoves(){
         this.possibleMoves.clear();
         generatePossibleMoves();
+        return List.copyOf(this.possibleMoves);
+    }
+    public List<Move> getPossibleMovesFrom(Coordinate source){
+        this.possibleMoves.clear();
+        generatePossibleMovesFrom(source);
         return List.copyOf(this.possibleMoves);
     }
 

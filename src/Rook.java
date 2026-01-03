@@ -20,5 +20,18 @@ public class Rook extends Piece{
             }
         }
     }
+    @Override
+    protected void generatePossibleMovesFrom(Coordinate source) {
+        int x = source.getX();
+        int y = source.getY();
+        int boardDimension = 8;
+        for(int i = 1; i < boardDimension; i++){
+            for(int[] offset : ROOK_OFFSETS){
+                int dx = offset[0] * i;
+                int dy = offset[1] * i;
+                this.possibleMoves.add(new Move(source, new Coordinate(x + dx, y + dy)));
+            }
+        }
+    }
 
 }

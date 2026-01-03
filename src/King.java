@@ -17,4 +17,14 @@ public class King extends Piece{
             this.possibleMoves.add(new Move(source, new Coordinate(x + dx, y + dy)));
         }
     }
+    @Override
+    protected void generatePossibleMovesFrom(Coordinate source) {
+        int x = source.getX();
+        int y = source.getY();
+        for(int[] offset : KING_OFFSETS){
+            int dx = offset[0];
+            int dy = offset[1];
+            this.possibleMoves.add(new Move(source, new Coordinate(x + dx, y + dy)));
+        }
+    }
 }

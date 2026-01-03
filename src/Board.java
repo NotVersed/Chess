@@ -52,9 +52,31 @@ public class Board {
         BOARDSTATE.put(new Coordinate(4, 7), new King(new Coordinate(4, 7), false));
     }
 
+    public Piece applyMove(Move move) {
+        Coordinate source = move.getSource();
+        Coordinate destination = move.getDestination();
+        Piece sourcePiece = BOARDSTATE.get(source);
+        sourcePiece.setPieceMoved();
+        sourcePiece.setCoordinate(destination);
+        Piece destinationPiece = BOARDSTATE.remove(source);
+        BOARDSTATE.remove(destination);
+        BOARDSTATE.put(destination, sourcePiece);
+        return destinationPiece;
+    }
+
+    public static Map<Coordinate, Piece> simulateMove(Move move, Map<Coordinate, Piece> state) {
+        Coordinate source = move.getSource();
+        Coordinate destination = move.getDestination();
+        Piece sourcePiece = state.get(source);
+        state.remove(source);
+        state.remove(destination);
+        state.put(destination, sourcePiece);
+        return state;
+    }
+
     public boolean inBounds(Coordinate c) {
         return c.getX() >= 0 && c.getX() < ROWS
-            && c.getY() >= 0 && c.getY() < COLUMNS;
+                && c.getY() >= 0 && c.getY() < COLUMNS;
     }
 
     public boolean isOccupied(Coordinate c) {
@@ -72,7 +94,8 @@ public class Board {
     public int getColumns() {
         return COLUMNS;
     }
-    public Map<Coordinate, Piece> getBoardState(){
+
+    public Map<Coordinate, Piece> getBoardState() {
         return Map.copyOf(this.BOARDSTATE);
     }
 }
