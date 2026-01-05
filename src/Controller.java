@@ -57,13 +57,11 @@ public class Controller {
             return false;
         }
 
-        // apply move
         BOARD.applyMove(move);
 
-        // flip turn
         whiteToMove = !whiteToMove;
 
-        // recompute validator + caches
+        // recompute validator methods
         validator = new MoveValidator(BOARD, enPassantTarget);
         generateLegalMoves();
         generateControlledSquares();
@@ -83,7 +81,6 @@ public class Controller {
 
     private boolean isKingInCheck(boolean white) {
         Coordinate kingSquare = getKingSquare(white);
-        // or via validator if that’s where it lives
 
         Set<Coordinate> enemyControlled
                 = white ? validator.getControlledSquares(false)
