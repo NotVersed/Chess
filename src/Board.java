@@ -62,28 +62,24 @@ public class Board {
         Piece capturedPiece = null;
         Coordinate enPassantCaptureSquare = null;
 
-        // ---------------- EN PASSANT ----------------
-        if (movedPiece instanceof Pawn &&
-                source.getX() != destination.getX() &&
-                BOARDSTATE.get(destination) == null) {
+        // en passant
+        if (movedPiece instanceof Pawn && source.getX() != destination.getX() && BOARDSTATE.get(destination) == null) {
 
             int direction = ((Pawn) movedPiece).getDirection();
             enPassantCaptureSquare = new Coordinate(destination.getX(), destination.getY() - direction);
-
             capturedPiece = BOARDSTATE.get(enPassantCaptureSquare);
             BOARDSTATE.remove(enPassantCaptureSquare);
         } else {
             capturedPiece = BOARDSTATE.get(destination);
         }
 
-        // ---------------- CASTLING ----------------
+        // castling
         Piece castlingRook = null;
         Coordinate rookFrom = null;
         Coordinate rookTo = null;
         boolean rookHadMoved = false;
 
-        boolean isCastling = movedPiece instanceof King &&
-                Math.abs(destination.getX() - source.getX()) == 2;
+        boolean isCastling = movedPiece instanceof King && Math.abs(destination.getX() - source.getX()) == 2;
 
         if (isCastling) {
             int y = source.getY();
@@ -114,15 +110,15 @@ public class Board {
             capturedPiece = null;
         }
 
-        // ---------------- REMOVE SOURCE PIECE ----------------
+        // remove source piece
         BOARDSTATE.remove(source);
 
-        // ---------------- NORMAL CAPTURE ----------------
+        // normal capture
         if (capturedPiece != null && enPassantCaptureSquare == null) {
             BOARDSTATE.remove(destination);
         }
 
-        // ---------------- PROMOTION ----------------
+        // promotion
         Piece promotedFrom = null;
         Piece promotedTo = null;
 
@@ -135,7 +131,7 @@ public class Board {
             }
         }
 
-        // ---------------- PLACE MOVED PIECE ----------------
+        // place moved piece
         movedPiece.setCoordinate(destination);
         movedPiece.setPieceMoved(true);
         BOARDSTATE.put(destination, movedPiece);

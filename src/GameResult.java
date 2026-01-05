@@ -1,0 +1,6 @@
+public enum GameResult {
+    ONGOING,
+    WHITE_WINS_CHECKMATE,
+    BLACK_WINS_CHECKMATE,
+    STALEMATE
+}

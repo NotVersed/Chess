@@ -37,15 +37,16 @@ public class MouseListener extends MouseAdapter {
         Point p = SwingUtilities.convertPoint(PIECE, e.getPoint(), parent);
         Coordinate target = parent.screenToBoard(p);
 
-        if (origin == null || target == null) {
-            parent.refreshPieces();
-            return;
+        if (origin != null && target != null) {
+            parent.getController().tryMove(new Move(origin, target));
         }
 
-        parent.getController().tryMove(new Move(origin, target));
-
-        // always rebuild from board state (snaps back on illegal)
         parent.refreshPieces();
+
+        // reset drag state
+        origin = null;
+        offsetX = 0;
+        offsetY = 0;
     }
 
 }

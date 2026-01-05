@@ -41,8 +41,10 @@ public class BoardPanel extends JLayeredPane {
 
     public void refreshPieces() {
         // remove all existing piece panels
-        for (Component c : getComponentsInLayer(JLayeredPane.PALETTE_LAYER)) {
-            remove(c);
+        for (Component c : getComponents()) {
+            if (c instanceof PiecePanel) {
+                remove(c);
+            }
         }
 
         int rows = BOARD.getRows();
@@ -78,7 +80,9 @@ public class BoardPanel extends JLayeredPane {
         int tileSize = getWidth() / BOARD.getColumns();
         int x = p.x / tileSize;
         int y = BOARD.getRows() - 1 - (p.y / tileSize);
-        if (x < 0 || x >= BOARD.getColumns() || y < 0 || y >= BOARD.getRows()) return null;
+        if (x < 0 || x >= BOARD.getColumns() || y < 0 || y >= BOARD.getRows()) {
+            return null;
+        }
         return new Coordinate(x, y);
     }
 
@@ -92,7 +96,8 @@ public class BoardPanel extends JLayeredPane {
     public Board getBoard() {
         return this.BOARD;
     }
-    public Controller getController(){
+
+    public Controller getController() {
         return this.CONTROLLER;
     }
 

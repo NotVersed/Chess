@@ -19,7 +19,9 @@ public final class MoveValidator {
         this.enPassantTarget = enPassantTarget;
         whiteControlled = new HashSet<>();
         blackControlled = new HashSet<>();
-    };
+    }
+
+    ;
 
     // only derive state based on the boardState do not use Piece.getCoordinate() it
     // is
@@ -81,8 +83,9 @@ public final class MoveValidator {
 
         for (Move move : pieceMoves) {
             Coordinate destination = move.getDestination();
-            if (!BOARD.inBounds(destination))
+            if (!BOARD.inBounds(destination)) {
                 continue;
+            }
 
             int dx = destination.getX() - source.getX();
             int dy = destination.getY() - source.getY();
@@ -136,8 +139,9 @@ public final class MoveValidator {
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
-            if (!BOARD.inBounds(destination))
+            if (!BOARD.inBounds(destination)) {
                 continue;
+            }
             Piece occupyingPiece = BOARD.getBoardState().get(destination);
             if (occupyingPiece == null || !isAlly(knight, occupyingPiece)) {
                 legalMoves.add(move);
@@ -158,9 +162,14 @@ public final class MoveValidator {
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
-            if (!BOARD.inBounds(destination))
+            if (!BOARD.inBounds(destination)) {
                 continue;
+            }
             Piece occupyingPiece = BOARD.getBoardState().get(destination);
+            int dx = Math.abs(destination.getX() - move.getSource().getX());
+            if (dx == 2) {
+                continue;
+            }
 
             if (occupyingPiece == null || !isAlly(king, occupyingPiece)) {
                 legalMoves.add(move);
@@ -184,8 +193,9 @@ public final class MoveValidator {
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
-            if (!BOARD.inBounds(destination))
+            if (!BOARD.inBounds(destination)) {
                 continue;
+            }
             Piece occupyingPiece = BOARD.getBoardState().get(destination);
 
             int dx = destination.getX() - source.getX();
@@ -246,9 +256,9 @@ public final class MoveValidator {
                     break;
                 }
             }
-            if (enemyControl.contains(start) ||
-                    enemyControl.contains(through) ||
-                    enemyControl.contains(end)) {
+            if (enemyControl.contains(start)
+                    || enemyControl.contains(through)
+                    || enemyControl.contains(end)) {
                 pathClear = false;
             }
 
@@ -273,9 +283,9 @@ public final class MoveValidator {
                     break;
                 }
             }
-            if (enemyControl.contains(start) ||
-                    enemyControl.contains(through) ||
-                    enemyControl.contains(end)) {
+            if (enemyControl.contains(start)
+                    || enemyControl.contains(through)
+                    || enemyControl.contains(end)) {
                 pathClear = false;
             }
 
@@ -301,8 +311,8 @@ public final class MoveValidator {
 
     private Coordinate getKing(boolean white) {
         for (Map.Entry<Coordinate, Piece> entry : BOARD.getBoardState().entrySet()) {
-            if (entry.getValue() instanceof King &&
-                    entry.getValue().isWhite() == white) {
+            if (entry.getValue() instanceof King
+                    && entry.getValue().isWhite() == white) {
                 return entry.getKey();
             }
         }
@@ -357,10 +367,12 @@ public final class MoveValidator {
         Set<Coordinate> target = pawn.isWhite() ? whiteControlled : blackControlled;
         Coordinate controlledLeft = new Coordinate(source.getX() - 1, source.getY() + direction);
         Coordinate controlledRight = new Coordinate(source.getX() + 1, source.getY() + direction);
-        if (BOARD.inBounds(controlledLeft))
+        if (BOARD.inBounds(controlledLeft)) {
             target.add(controlledLeft);
-        if (BOARD.inBounds(controlledRight))
+        }
+        if (BOARD.inBounds(controlledRight)) {
             target.add(controlledRight);
+        }
     }
 
     private void addKnightControlledSquares(Knight knight, Coordinate source) {
@@ -368,8 +380,9 @@ public final class MoveValidator {
         List<Move> possibleKnightMoves = knight.getPossibleMovesFrom(source);
         for (Move move : possibleKnightMoves) {
             Coordinate coordinate = move.getDestination();
-            if (BOARD.inBounds(coordinate))
+            if (BOARD.inBounds(coordinate)) {
                 target.add(coordinate);
+            }
         }
     }
 
@@ -378,11 +391,13 @@ public final class MoveValidator {
         List<Move> possibleKingMoves = king.getPossibleMovesFrom(source);
         for (Move move : possibleKingMoves) {
             int dx = Math.abs(source.getX() - move.getDestination().getX());
-            if (dx == 2)
+            if (dx == 2) {
                 continue;
+            }
             Coordinate coordinate = move.getDestination();
-            if (BOARD.inBounds(coordinate))
+            if (BOARD.inBounds(coordinate)) {
                 target.add(coordinate);
+            }
         }
     }
 
@@ -394,12 +409,13 @@ public final class MoveValidator {
         }
     }
 
-    public Set<Coordinate> getControlledSquares(boolean white){
+    public Set<Coordinate> getControlledSquares(boolean white) {
         generateControlledSquares();
         return Collections.unmodifiableSet(white ? whiteControlled : blackControlled);
 
     }
-    public void setEnPassantTarget(Coordinate coordinate){
+
+    public void setEnPassantTarget(Coordinate coordinate) {
         this.enPassantTarget = coordinate;
     }
 
