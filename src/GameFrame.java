@@ -6,7 +6,9 @@ public class GameFrame extends JFrame{
     private final BoardPanel PANEL;
 
     public GameFrame(){
-        this.PANEL = new BoardPanel();
+        Board board = new Board();
+        Controller controller = new Controller(board);
+        this.PANEL = new BoardPanel(board, controller);
         this.add(PANEL);
         this.setTitle("Chess Game");
 		this.setBackground(Color.WHITE);

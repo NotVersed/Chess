@@ -10,7 +10,6 @@ import java.util.Set;
 public final class MoveValidator {
 
     private final Board BOARD;
-    private final Map<Coordinate, Piece> BOARDSTATE;
     private Coordinate enPassantTarget;
     Set<Coordinate> whiteControlled;
     Set<Coordinate> blackControlled;
@@ -18,7 +17,6 @@ public final class MoveValidator {
     public MoveValidator(Board BOARD, Coordinate enPassantTarget) {
         this.BOARD = BOARD;
         this.enPassantTarget = enPassantTarget;
-        this.BOARDSTATE = BOARD.getBoardState();
         whiteControlled = new HashSet<>();
         blackControlled = new HashSet<>();
     };
@@ -29,7 +27,7 @@ public final class MoveValidator {
     public Map<Piece, List<Move>> generateLegalMoves() {
         Map<Piece, List<Move>> legalMoves = new HashMap<>();
         generateControlledSquares();
-        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARD.getBoardState().entrySet()) {
             Coordinate source = entry.getKey();
             Piece piece = entry.getValue();
 
@@ -77,7 +75,7 @@ public final class MoveValidator {
         }
 
         Coordinate source = pieceMoves.get(0).getSource();
-        Piece movingPiece = BOARDSTATE.get(source);
+        Piece movingPiece = BOARD.getBoardState().get(source);
 
         Map<String, List<Move>> rays = new HashMap<>();
 
@@ -111,7 +109,7 @@ public final class MoveValidator {
 
             for (Move move : ray) {
                 Coordinate destination = move.getDestination();
-                Piece occupying = BOARDSTATE.get(destination);
+                Piece occupying = BOARD.getBoardState().get(destination);
 
                 if (occupying == null) {
                     legalMoves.add(move);
@@ -134,13 +132,13 @@ public final class MoveValidator {
         if (pseudoLegalMoves.isEmpty()) {
             return legalMoves;
         }
-        Piece knight = BOARDSTATE.get(pseudoLegalMoves.get(0).getSource());
+        Piece knight = BOARD.getBoardState().get(pseudoLegalMoves.get(0).getSource());
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
             if (!BOARD.inBounds(destination))
                 continue;
-            Piece occupyingPiece = BOARDSTATE.get(destination);
+            Piece occupyingPiece = BOARD.getBoardState().get(destination);
             if (occupyingPiece == null || !isAlly(knight, occupyingPiece)) {
                 legalMoves.add(move);
             }
@@ -156,13 +154,13 @@ public final class MoveValidator {
             return legalMoves;
         }
 
-        Piece king = BOARDSTATE.get(pseudoLegalMoves.get(0).getSource());
+        Piece king = BOARD.getBoardState().get(pseudoLegalMoves.get(0).getSource());
 
         for (Move move : pseudoLegalMoves) {
             Coordinate destination = move.getDestination();
             if (!BOARD.inBounds(destination))
                 continue;
-            Piece occupyingPiece = BOARDSTATE.get(destination);
+            Piece occupyingPiece = BOARD.getBoardState().get(destination);
 
             if (occupyingPiece == null || !isAlly(king, occupyingPiece)) {
                 legalMoves.add(move);
@@ -179,7 +177,7 @@ public final class MoveValidator {
             return legalMoves;
         }
 
-        Piece piece = BOARDSTATE.get(pseudoLegalMoves.get(0).getSource());
+        Piece piece = BOARD.getBoardState().get(pseudoLegalMoves.get(0).getSource());
         Pawn pawn = (Pawn) piece;
         Coordinate source = pseudoLegalMoves.get(0).getSource();
         int direction = pawn.getDirection();
@@ -188,7 +186,7 @@ public final class MoveValidator {
             Coordinate destination = move.getDestination();
             if (!BOARD.inBounds(destination))
                 continue;
-            Piece occupyingPiece = BOARDSTATE.get(destination);
+            Piece occupyingPiece = BOARD.getBoardState().get(destination);
 
             int dx = destination.getX() - source.getX();
             int dy = destination.getY() - source.getY();
@@ -201,7 +199,7 @@ public final class MoveValidator {
                 } // Two squares forward
                 else if (dy == 2 * direction && !pawn.hasMoved() && occupyingPiece == null) {
                     Coordinate intermediate = new Coordinate(source.getX(), source.getY() + direction);
-                    if (BOARDSTATE.get(intermediate) == null) {
+                    if (BOARD.getBoardState().get(intermediate) == null) {
                         legalMoves.add(move);
                     }
                 }
@@ -212,7 +210,7 @@ public final class MoveValidator {
                 } // en passant
                 else if (occupyingPiece == null && enPassantTarget != null && destination.equals(enPassantTarget)) {
                     Coordinate capturedSquare = new Coordinate(destination.getX(), destination.getY() - direction);
-                    Piece capturedPiece = BOARDSTATE.get(capturedSquare);
+                    Piece capturedPiece = BOARD.getBoardState().get(capturedSquare);
                     if (capturedPiece instanceof Pawn && !isAlly(pawn, capturedPiece)) {
                         legalMoves.add(move);
                     }
@@ -234,7 +232,7 @@ public final class MoveValidator {
 
         // ---------- King-side castling ----------
         Coordinate kingSideRookSquare = new Coordinate(coordinate.getX() + 3, y);
-        Piece rook = BOARDSTATE.get(kingSideRookSquare);
+        Piece rook = BOARD.getBoardState().get(kingSideRookSquare);
         Coordinate start = coordinate;
         Coordinate through = new Coordinate(start.getX() + 1, start.getY());
         Coordinate end = new Coordinate(start.getX() + 2, start.getY());
@@ -243,7 +241,7 @@ public final class MoveValidator {
 
             for (int x = coordinate.getX() + 1; x < kingSideRookSquare.getX(); x++) {
                 Coordinate c = new Coordinate(x, y);
-                if (BOARDSTATE.containsKey(c)) {
+                if (BOARD.getBoardState().containsKey(c)) {
                     pathClear = false;
                     break;
                 }
@@ -261,7 +259,7 @@ public final class MoveValidator {
 
         // ---------- Queen-side castling ----------
         Coordinate queenSideRookSquare = new Coordinate(coordinate.getX() - 4, y);
-        rook = BOARDSTATE.get(queenSideRookSquare);
+        rook = BOARD.getBoardState().get(queenSideRookSquare);
         start = coordinate;
         through = new Coordinate(start.getX() - 1, start.getY());
         end = new Coordinate(start.getX() - 2, start.getY());
@@ -270,7 +268,7 @@ public final class MoveValidator {
 
             for (int x = coordinate.getX() - 1; x > queenSideRookSquare.getX(); x--) {
                 Coordinate c = new Coordinate(x, y);
-                if (BOARDSTATE.containsKey(c)) {
+                if (BOARD.getBoardState().containsKey(c)) {
                     pathClear = false;
                     break;
                 }
@@ -289,7 +287,7 @@ public final class MoveValidator {
     }
 
     private Coordinate findPiece(Piece target) {
-        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARD.getBoardState().entrySet()) {
             if (entry.getValue() == target) {
                 return entry.getKey();
             }
@@ -302,7 +300,7 @@ public final class MoveValidator {
     }
 
     private Coordinate getKing(boolean white) {
-        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARD.getBoardState().entrySet()) {
             if (entry.getValue() instanceof King &&
                     entry.getValue().isWhite() == white) {
                 return entry.getKey();
@@ -330,7 +328,7 @@ public final class MoveValidator {
     private void generateControlledSquares() {
         whiteControlled.clear();
         blackControlled.clear();
-        for (Map.Entry<Coordinate, Piece> entry : BOARDSTATE.entrySet()) {
+        for (Map.Entry<Coordinate, Piece> entry : BOARD.getBoardState().entrySet()) {
             Coordinate source = entry.getKey();
             Piece piece = entry.getValue();
             addControlledSquares(piece, source);

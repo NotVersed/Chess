@@ -57,50 +57,72 @@ public class Board {
         Coordinate destination = move.getDestination();
 
         Piece movedPiece = BOARDSTATE.get(source);
-        Piece capturedPiece = BOARDSTATE.get(destination);
-
         boolean movedPieceHadMoved = movedPiece.hasMoved();
+
+        Piece capturedPiece = null;
         Coordinate enPassantCaptureSquare = null;
 
-        // --- en passant ---
-        if (movedPiece instanceof Pawn && capturedPiece == null && source.getX() != destination.getX()) {
+        // ---------------- EN PASSANT ----------------
+        if (movedPiece instanceof Pawn &&
+                source.getX() != destination.getX() &&
+                BOARDSTATE.get(destination) == null) {
+
             int direction = ((Pawn) movedPiece).getDirection();
             enPassantCaptureSquare = new Coordinate(destination.getX(), destination.getY() - direction);
+
             capturedPiece = BOARDSTATE.get(enPassantCaptureSquare);
             BOARDSTATE.remove(enPassantCaptureSquare);
+        } else {
+            capturedPiece = BOARDSTATE.get(destination);
         }
 
-        // --- castling ---
+        // ---------------- CASTLING ----------------
         Piece castlingRook = null;
         Coordinate rookFrom = null;
         Coordinate rookTo = null;
         boolean rookHadMoved = false;
 
-        if (movedPiece instanceof King && Math.abs(destination.getX() - source.getX()) == 2) {
+        boolean isCastling = movedPiece instanceof King &&
+                Math.abs(destination.getX() - source.getX()) == 2;
+
+        if (isCastling) {
             int y = source.getY();
             boolean kingSide = destination.getX() > source.getX();
 
-            rookFrom = kingSide ? new Coordinate(source.getX() + 3, y) : new Coordinate(source.getX() - 4, y);
-            rookTo = kingSide ? new Coordinate(source.getX() + 1, y) : new Coordinate(source.getX() - 1, y);
+            rookFrom = kingSide
+                    ? new Coordinate(source.getX() + 3, y)
+                    : new Coordinate(source.getX() - 4, y);
 
+            rookTo = kingSide
+                    ? new Coordinate(source.getX() + 1, y)
+                    : new Coordinate(source.getX() - 1, y);
+
+            System.out.println("CASTLING ROOK TYPE = " + BOARDSTATE.get(rookFrom).getClass());
             castlingRook = BOARDSTATE.get(rookFrom);
+            if (!(castlingRook instanceof Rook)) {
+                throw new IllegalStateException("Castling rook missing at " + rookFrom);
+            }
+
             rookHadMoved = castlingRook.hasMoved();
 
             BOARDSTATE.remove(rookFrom);
             castlingRook.setCoordinate(rookTo);
             castlingRook.setPieceMoved(true);
             BOARDSTATE.put(rookTo, castlingRook);
+
+            // ❗ Castling is NOT a capture
+            capturedPiece = null;
         }
 
-        // --- remove source ---
+        // ---------------- REMOVE SOURCE PIECE ----------------
         BOARDSTATE.remove(source);
 
-        // --- remove normal capture ---
+        // ---------------- NORMAL CAPTURE ----------------
         if (capturedPiece != null && enPassantCaptureSquare == null) {
             BOARDSTATE.remove(destination);
         }
 
-        // --- promotion ---
+        // ---------------- PROMOTION ----------------
         Piece promotedFrom = null;
         Piece promotedTo = null;
 
@@ -113,7 +135,7 @@ public class Board {
             }
         }
 
-        // --- place moved (or promoted) piece ---
+        // ---------------- PLACE MOVED PIECE ----------------
         movedPiece.setCoordinate(destination);
         movedPiece.setPieceMoved(true);
         BOARDSTATE.put(destination, movedPiece);
@@ -134,25 +156,29 @@ public class Board {
 
     public void undoMove(UndoMove undo) {
 
-        // remove promoted piece
-        if (undo.promotedTo != null) {
-            BOARDSTATE.remove(undo.move.getDestination());
-            BOARDSTATE.put(undo.move.getSource(), undo.promotedFrom);
-        }
+        // --- remove moved piece from destination ---
+        BOARDSTATE.remove(undo.move.getDestination());
 
-        // undo castling rook
+        // --- undo promotion ---
+        Piece pieceToRestore = undo.promotedFrom != null
+                ? undo.promotedFrom
+                : undo.movedPiece;
+
+        pieceToRestore.setCoordinate(undo.move.getSource());
+        pieceToRestore.setPieceMoved(undo.movedPieceHadMoved);
+        BOARDSTATE.put(undo.move.getSource(), pieceToRestore);
+
+        // --- undo castling rook ---
         if (undo.castlingRook != null) {
             BOARDSTATE.remove(undo.castlingRookTo);
-            BOARDSTATE.put(undo.castlingRookFrom, undo.castlingRook);
+
+            undo.castlingRook.setCoordinate(undo.castlingRookFrom);
             undo.castlingRook.setPieceMoved(undo.castlingRookHadMoved);
+
+            BOARDSTATE.put(undo.castlingRookFrom, undo.castlingRook);
         }
 
-        // undo moved piece
-        BOARDSTATE.remove(undo.move.getDestination());
-        BOARDSTATE.put(undo.move.getSource(), undo.movedPiece);
-        undo.movedPiece.setPieceMoved(undo.movedPieceHadMoved);
-
-        // restore captures
+        // --- restore captures ---
         if (undo.enPassantCaptureSquare != null) {
             BOARDSTATE.put(undo.enPassantCaptureSquare, undo.capturedPiece);
         } else if (undo.capturedPiece != null) {

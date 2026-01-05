@@ -5,13 +5,13 @@ import javax.swing.*;
 public class BoardPanel extends JLayeredPane {
 
     private final TilePanel[][] TILEPANELS;
-    private final PiecePanel[][] PIECEPANELS;
     private final Board BOARD;
+    private final Controller CONTROLLER;
 
-    public BoardPanel() {
-        this.BOARD = new Board();
+    public BoardPanel(Board board, Controller controller) {
+        this.CONTROLLER = controller;
+        this.BOARD = board;
         TILEPANELS = new TilePanel[BOARD.getRows()][BOARD.getColumns()];
-        PIECEPANELS = new PiecePanel[BOARD.getRows()][BOARD.getColumns()];
         setLayout(null);
         setPreferredSize(new Dimension(800, 800));
         addTilePanels();
@@ -39,7 +39,12 @@ public class BoardPanel extends JLayeredPane {
         }
     }
 
-    private void refreshPieces() {
+    public void refreshPieces() {
+        // remove all existing piece panels
+        for (Component c : getComponentsInLayer(JLayeredPane.PALETTE_LAYER)) {
+            remove(c);
+        }
+
         int rows = BOARD.getRows();
         int cols = BOARD.getColumns();
         int tileSize = getPreferredSize().width / cols;
@@ -64,12 +69,16 @@ public class BoardPanel extends JLayeredPane {
                 }
             }
         }
+
+        revalidate();
+        repaint();
     }
 
     public Coordinate screenToBoard(Point p) {
         int tileSize = getWidth() / BOARD.getColumns();
         int x = p.x / tileSize;
         int y = BOARD.getRows() - 1 - (p.y / tileSize);
+        if (x < 0 || x >= BOARD.getColumns() || y < 0 || y >= BOARD.getRows()) return null;
         return new Coordinate(x, y);
     }
 
@@ -83,8 +92,8 @@ public class BoardPanel extends JLayeredPane {
     public Board getBoard() {
         return this.BOARD;
     }
-
-    public PiecePanel[][] getPiecePanels() {
-        return this.PIECEPANELS;
+    public Controller getController(){
+        return this.CONTROLLER;
     }
+
 }

@@ -37,7 +37,15 @@ public class MouseListener extends MouseAdapter {
         Point p = SwingUtilities.convertPoint(PIECE, e.getPoint(), parent);
         Coordinate target = parent.screenToBoard(p);
 
-        //parent.getController().onMoveAttempt(origin, target);
+        if (origin == null || target == null) {
+            parent.refreshPieces();
+            return;
+        }
+
+        parent.getController().tryMove(new Move(origin, target));
+
+        // always rebuild from board state (snaps back on illegal)
+        parent.refreshPieces();
     }
 
 }
