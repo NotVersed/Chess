@@ -1,4 +1,3 @@
-
 import java.awt.Point;
 import java.awt.event.*;
 import javax.swing.*;
@@ -7,7 +6,7 @@ public class MouseListener extends MouseAdapter {
 
     private final PiecePanel PIECE;
     private int offsetX, offsetY;
-    private Coordinate origin;
+    private int originSquare = -1;
 
     public MouseListener(PiecePanel piece) {
         this.PIECE = piece;
@@ -16,10 +15,12 @@ public class MouseListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
         BoardPanel parent = (BoardPanel) PIECE.getParent();
+        Controller controller = parent.getController();
         Point p = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), parent);
-        origin = parent.screenToBoard(p);
+        originSquare = parent.screenToSquare(p);
         offsetX = e.getX();
         offsetY = e.getY();
+        parent.setLegalMoves(controller.getLegalMoves(), originSquare);
         parent.setLayer(this.PIECE, JLayeredPane.DRAG_LAYER);
     }
 
@@ -35,18 +36,18 @@ public class MouseListener extends MouseAdapter {
         parent.setLayer(PIECE, JLayeredPane.PALETTE_LAYER);
 
         Point p = SwingUtilities.convertPoint(PIECE, e.getPoint(), parent);
-        Coordinate target = parent.screenToBoard(p);
+        int targetSquare = parent.screenToSquare(p);
 
-        if (origin != null && target != null) {
-            parent.getController().tryMove(new Move(origin, target));
+        if (originSquare != -1 && targetSquare != -1) {
+            int move = Move.encode(originSquare, targetSquare, Move.NORMAL);
+            parent.getController().tryMove(move);
         }
-
+        parent.clearLegalMoves();
         parent.refreshPieces();
+        parent.onMoveMade();
 
-        // reset drag state
-        origin = null;
+        originSquare = -1;
         offsetX = 0;
         offsetY = 0;
     }
-
 }

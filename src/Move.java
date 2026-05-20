@@ -1,42 +1,43 @@
-
-import java.util.Objects;
-
-public class Move {
-
-    private final Coordinate SOURCE;
-    private final Coordinate DESTINATION;
-
-    public Move(final Coordinate SOURCE,
-            final Coordinate DESTINATION) {
-        this.SOURCE = SOURCE;
-        this.DESTINATION = DESTINATION;
+public final class Move {
+    private Move() {
     }
 
-    public Coordinate getSource() {
-        return this.SOURCE;
+    // encode a move into an int
+    public static int encode(int from, int to, int type) {
+        return (type << 12) | (to << 6) | from;
     }
 
-    public Coordinate getDestination() {
-        return this.DESTINATION;
+    // overloaded for promotion moves
+    public static int encode(int from, int to, int type, int promotionPiece) {
+        return (promotionPiece << 14) | (type << 12) | (to << 6) | from;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Move)) {
-            return false;
-        }
-        Move m = (Move) o;
-        return this.SOURCE.equals(m.SOURCE)
-                && this.DESTINATION.equals(m.DESTINATION);
+    // decode
+    public static int from(int move) {
+        return move & 0x3F;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(SOURCE, DESTINATION);
+    public static int to(int move) {
+        return (move >> 6) & 0x3F;
     }
 
+    public static int type(int move) {
+        return (move >> 12) & 0x3;
+    }
 
+    public static int promotionPiece(int move) {
+        return (move >> 14) & 0x3;
+    }
+
+    // move types
+    public static final int NORMAL = 0;
+    public static final int CASTLING = 1;
+    public static final int EN_PASSANT = 2;
+    public static final int PROMOTION = 3;
+
+    // promotion pieces
+    public static final int PROMOTE_QUEEN = 0;
+    public static final int PROMOTE_ROOK = 1;
+    public static final int PROMOTE_BISHOP = 2;
+    public static final int PROMOTE_KNIGHT = 3;
 }

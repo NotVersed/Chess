@@ -5,7 +5,7 @@ import javax.swing.JPanel;
 public class PiecePanel extends JPanel {
     private final Image IMAGE;
 
-    public PiecePanel(Piece piece) {
+    public PiecePanel(PieceInfo piece) {
         this.IMAGE = PieceImage.getPieceImage(piece).getImage();
         setOpaque(false);
     }

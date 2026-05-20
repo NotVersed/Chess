@@ -1,136 +1,79 @@
-
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.swing.SwingUtilities;
 
 public class Controller {
 
-    private final Board BOARD;
-    private Map<Piece, List<Move>> legalMoves;
-    private Coordinate enPassantTarget;
-    private MoveValidator validator;
-    private Set<Coordinate> whiteControlled;
-    private Set<Coordinate> blackControlled;
+    private final BitBoard board;
+    private MoveGenerator generator;
     private boolean whiteToMove;
+    private int enPassantSquare;
     private boolean gameOver;
+    private List<Integer> legalMoves;
 
-    public Controller(final Board BOARD) {
+    public Controller(BitBoard board) {
+        this.board = board;
         this.whiteToMove = true;
-        this.BOARD = BOARD;
-        this.legalMoves = new HashMap<>();
-        this.enPassantTarget = null;
-        this.validator = new MoveValidator(BOARD, enPassantTarget);
-        gameOver = false;
-        generateLegalMoves();
-        generateControlledSquares();
+        this.enPassantSquare = -1;
+        this.gameOver = false;
+        this.generator = new MoveGenerator(board);
+        this.legalMoves = generator.generateLegalMoves(whiteToMove);
     }
 
-    private void generateLegalMoves() {
-        legalMoves = validator.generateLegalMoves();
-    }
-
-    private void generateControlledSquares() {
-        whiteControlled = validator.getControlledSquares(true);
-        blackControlled = validator.getControlledSquares(false);
-    }
-
-    public boolean tryMove(Move move) {
-        if (move == null) {
+    public boolean tryMove(int move) {
+        if (gameOver)
             return false;
-        }
-
-        Piece movingPiece = BOARD.getBoardState().get(move.getSource());
-        if (movingPiece == null) {
+        if (!legalMoves.contains(move))
             return false;
-        }
 
-        // turn enforcement
-        if (movingPiece.isWhite() != whiteToMove) {
-            return false;
-        }
+        board.applyMove(move);
 
-        // legality check
-        List<Move> moves = legalMoves.get(movingPiece);
-        if (moves == null || !moves.contains(move)) {
-            return false;
-        }
-
-        BOARD.applyMove(move);
+        // update en passant
+        enPassantSquare = board.getEnPassantSquare(move);
 
         whiteToMove = !whiteToMove;
-
-        // recompute validator methods
-        validator = new MoveValidator(BOARD, enPassantTarget);
-        generateLegalMoves();
-        generateControlledSquares();
+        generator = new MoveGenerator(board);
+        legalMoves = generator.generateLegalMoves(whiteToMove);
 
         GameResult result = evaluateGameState();
         if (result != GameResult.ONGOING) {
             gameOver = true;
-
-            // repaint board first
-            SwingUtilities.invokeLater(() -> {
-                GameOverDialog.show(result);
-            });
+            SwingUtilities.invokeLater(() -> GameOverDialog.show(result));
         }
 
         return true;
     }
 
-    private boolean isKingInCheck(boolean white) {
-        Coordinate kingSquare = getKingSquare(white);
-
-        Set<Coordinate> enemyControlled
-                = white ? validator.getControlledSquares(false)
-                        : validator.getControlledSquares(true);
-
-        return enemyControlled.contains(kingSquare);
-    }
-
-    private Coordinate getKingSquare(boolean white) {
-        for (Map.Entry<Coordinate, Piece> entry : BOARD.getBoardState().entrySet()) {
-            if (entry.getValue() instanceof King
-                    && entry.getValue().isWhite() == white) {
-                return entry.getKey();
-            }
-        }
-        throw new IllegalStateException("King not found");
-    }
-
     private GameResult evaluateGameState() {
-        // generate legal moves already happened
-        boolean hasAnyMoves = false;
-
-        for (Map.Entry<Piece, List<Move>> entry : legalMoves.entrySet()) {
-            Piece piece = entry.getKey();
-
-            // only consider side to move
-            if (piece.isWhite() != whiteToMove) {
-                continue;
+        if (legalMoves.isEmpty()) {
+            if (generator.isInCheck(whiteToMove)) {
+                return whiteToMove ? GameResult.BLACK_WINS_CHECKMATE : GameResult.WHITE_WINS_CHECKMATE;
             }
-
-            if (!entry.getValue().isEmpty()) {
-                hasAnyMoves = true;
-                break;
-            }
-        }
-
-        if (hasAnyMoves) {
-            return GameResult.ONGOING;
-        }
-
-        // no legal moves exist
-        boolean inCheck = isKingInCheck(whiteToMove);
-
-        if (inCheck) {
-            return whiteToMove
-                    ? GameResult.BLACK_WINS_CHECKMATE
-                    : GameResult.WHITE_WINS_CHECKMATE;
-        } else {
             return GameResult.STALEMATE;
         }
+        return GameResult.ONGOING;
     }
 
+    public List<Integer> getLegalMoves() {
+        return legalMoves;
+    }
+
+    public boolean whiteTurn() {
+        return whiteToMove;
+    }
+
+    public BitBoard getBoard() {
+        return board;
+    }
+
+    public int getEnPassantSquare() {
+        return enPassantSquare;
+    }
+
+    public GameResult getGameState() {
+        return evaluateGameState();
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
 }
