@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class MoveGenerator {
@@ -11,7 +12,26 @@ public class MoveGenerator {
 
     public List<Integer> generateLegalMoves(boolean white) {
         List<Integer> moves = new ArrayList<>();
-        // TODO
+
+        // generate pseudo legal moves
+        generateKnightMoves(white, moves);
+        generateKingMoves(white, moves);
+        generateRookMoves(white, moves);
+        generateBishopMoves(white, moves);
+        generateQueenMoves(white, moves);
+        generatePawnMoves(white, moves);
+
+        // apply and see if checks the king and undo
+        // iterating backwards also works and is slightly faster but I wanted to use a feature I haven't used before
+        // for (int i = moves.size() - 1; i >= 0; i--) { ... }
+        Iterator<Integer> it = moves.iterator();
+        while(it.hasNext()){
+            int move = it.next();
+            UndoInfo undo = board.applyMove(move);
+            if(isInCheck(board, white)) it.remove();
+            board.undoMove(undo);
+        }
+
         return moves;
     }
 
@@ -149,5 +169,29 @@ public class MoveGenerator {
         } else {
             moves.add(Move.encode(from, target, type));
         }
+    }
+
+    private boolean isInCheck(BitBoard board, boolean white){
+        // board info
+        int kingSq = white ? Long.numberOfTrailingZeros(board.getWhiteKing()) : Long.numberOfTrailingZeros(board.getBlackKing());
+        long occupied = board.allPieces();
+        long friendly = white ? board.whitePieces() : board.blackPieces();
+
+
+        // place imaginary piece on king square and see if it can see another piece of its kind
+        long enemyRooks = white ? board.getBlackRooks() : board.getWhiteRooks();
+        long enemyBishops = white ? board.getBlackBishops() : board.getWhiteBishops();
+        long enemyQueens = white ? board.getBlackQueens() : board.getWhiteQueens();
+        long enemyKnights = white ? board.getBlackKnights() : board.getWhiteKnights();
+        long enemyPawns = white ? board.getBlackPawns() : board.getWhitePawns();
+        long enemyKing = white ? board.getBlackKing() : board.getWhiteKing();
+        long pawnAttacks = white ? AttackTables.WHITE_PAWN_ATTACKS[kingSq] : AttackTables.BLACK_PAWN_ATTACKS[kingSq];
+        if((AttackTables.rookAttacks(kingSq, occupied, friendly) & (enemyRooks | enemyQueens)) != 0) return true;
+        if((AttackTables.bishopAttacks(kingSq, occupied, friendly) & (enemyBishops | enemyQueens)) != 0) return true;
+        if((AttackTables.KNIGHT_ATTACKS[kingSq] & enemyKnights) != 0) return true;
+        if((pawnAttacks & enemyPawns) != 0) return true;
+        if ((AttackTables.KING_ATTACKS[kingSq] & enemyKing) != 0) return true;
+
+        return false;
     }
 }
