@@ -71,7 +71,14 @@ public class BitBoard {
         int to = Move.to(move);
 
         PieceInfo moving = getPieceAt(from);
-        PieceInfo captured = getPieceAt(to);
+        PieceInfo captured;
+        if (Move.type(move) == Move.EN_PASSANT) {
+            int capturedPawnSquare = moving.white() ? to - 8 : to + 8;
+            captured = getPieceAt(capturedPawnSquare);
+            clearSquare(capturedPawnSquare);
+        } else {
+            captured = getPieceAt(to);
+        }
 
         // save captured piece info for undo
         PieceType capturedType = captured != null ? captured.type() : null;
@@ -82,36 +89,56 @@ public class BitBoard {
         clearSquare(to);
 
         // place piece on destination
-        setPiece(to, moving.type(), moving.white());
+        int backRank = moving.white() ? 7 : 0;
+        if ((moving.type() == PieceType.PAWN) && ((to / 8) == backRank)) {
+            int promotionPiece = Move.promotionPiece(move);
+            switch (promotionPiece) {
+                case Move.PROMOTE_QUEEN -> setPiece(to, PieceType.QUEEN, moving.white());
+                case Move.PROMOTE_KNIGHT -> setPiece(to, PieceType.KNIGHT, moving.white());
+                case Move.PROMOTE_ROOK -> setPiece(to, PieceType.ROOK, moving.white());
+                case Move.PROMOTE_BISHOP -> setPiece(to, PieceType.BISHOP, moving.white());
+            }
+        } else {
+            setPiece(to, moving.type(), moving.white());
+        }
 
         int prevEnPassantSquare = enPassantSquare;
-        if((moving.type() == PieceType.PAWN) && (Math.abs(from - to) == 16)){
+        if ((moving.type() == PieceType.PAWN) && (Math.abs(from - to) == 16)) {
             enPassantSquare = (from + to) / 2;
-        }
-        else{
+        } else {
             enPassantSquare = -1;
         }
 
         return new UndoInfo(move, capturedType, capturedWasWhite, prevEnPassantSquare);
     }
 
-    public void undoMove(UndoInfo undo){
+    public void undoMove(UndoInfo undo) {
+        int move = undo.move();
         // get the 2 move squares
-        int from = Move.from(undo.move());
-        int to = Move.to(undo.move());
+        int from = Move.from(move);
+        int to = Move.to(move);
 
         // record piece information
         PieceInfo movingPiece = getPieceAt(to);
 
         // set the moving piece back to where it was from
-        setPiece(from, movingPiece.type(), movingPiece.white());
+        if (Move.type(move) == Move.PROMOTION) {
+            setPiece(from, PieceType.PAWN, movingPiece.white());
+        } else {
+            setPiece(from, movingPiece.type(), movingPiece.white());
+        }
 
-        //clear the square the piece was on
+        // clear the square the piece was on
         clearSquare(to);
 
         // replace captured piece if it existed
-        if(undo.capturedPiece() != null){
-            setPiece(to, undo.capturedPiece(), undo.capturedWasWhite());
+        if (undo.capturedPiece() != null) {
+            if (Move.type(move) == Move.EN_PASSANT) {
+                int capturedPawnSq = undo.capturedWasWhite() ? to - 8 : to + 8;
+                setPiece(capturedPawnSq, undo.capturedPiece(), undo.capturedWasWhite());
+            } else {
+                setPiece(to, undo.capturedPiece(), undo.capturedWasWhite());
+            }
         }
 
         // restore en passant square
@@ -241,7 +268,7 @@ public class BitBoard {
         return blackKing;
     }
 
-    public int getEnPassantSquare(){
+    public int getEnPassantSquare() {
         return enPassantSquare;
     }
 

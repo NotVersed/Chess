@@ -6,14 +6,12 @@ public class Controller {
     private final BitBoard board;
     private MoveGenerator generator;
     private boolean whiteToMove;
-    private int enPassantSquare;
     private boolean gameOver;
     private List<Integer> legalMoves;
 
     public Controller(BitBoard board) {
         this.board = board;
         this.whiteToMove = true;
-        this.enPassantSquare = -1;
         this.gameOver = false;
         this.generator = new MoveGenerator(board);
         this.legalMoves = generator.generateLegalMoves(whiteToMove);
@@ -26,9 +24,6 @@ public class Controller {
             return false;
 
         board.applyMove(move);
-
-        // update en passant
-        enPassantSquare = board.getEnPassantSquare(move);
 
         whiteToMove = !whiteToMove;
         generator = new MoveGenerator(board);
@@ -45,7 +40,7 @@ public class Controller {
 
     private GameResult evaluateGameState() {
         if (legalMoves.isEmpty()) {
-            if (generator.isInCheck(whiteToMove)) {
+            if (generator.isInCheck(board, whiteToMove)) {
                 return whiteToMove ? GameResult.BLACK_WINS_CHECKMATE : GameResult.WHITE_WINS_CHECKMATE;
             }
             return GameResult.STALEMATE;
@@ -63,10 +58,6 @@ public class Controller {
 
     public BitBoard getBoard() {
         return board;
-    }
-
-    public int getEnPassantSquare() {
-        return enPassantSquare;
     }
 
     public GameResult getGameState() {

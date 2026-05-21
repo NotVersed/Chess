@@ -21,9 +21,9 @@ public class Engine {
         List<Integer> legalMoves = new MoveGenerator(board).generateLegalMoves(playingAsWhite);
 
         for (int move : legalMoves) {
-            board.applyMove(move);
+            UndoInfo undo = board.applyMove(move);
             int score = minimax(depth - 1, !playingAsWhite);
-            board.undoMove(move);
+            board.undoMove(undo);
 
             boolean isBetter = playingAsWhite ? score > bestScore : score < bestScore;
             if (isBetter) {
@@ -40,11 +40,11 @@ public class Engine {
             return Evaluator.evaluate(board);
         }
 
-        List<Integer> legalMoves = new MoveGenerator(board).generateLegalMoves(isMaximizing);
+        MoveGenerator gen = new MoveGenerator(board);
+        List<Integer> legalMoves = gen.generateLegalMoves(isMaximizing);
 
         if (legalMoves.isEmpty()) {
-            MoveGenerator gen = new MoveGenerator(board);
-            if (gen.isInCheck(isMaximizing)) {
+            if (gen.isInCheck(board, isMaximizing)) {
                 return isMaximizing ? -100000 : 100000;
             }
             return 0;
@@ -53,9 +53,9 @@ public class Engine {
         int eval = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
         for (int move : legalMoves) {
-            board.applyMove(move);
+            UndoInfo undo = board.applyMove(move);
             int score = minimax(depth - 1, !isMaximizing);
-            board.undoMove(move);
+            board.undoMove(undo);
 
             if (isMaximizing) {
                 eval = Math.max(eval, score);

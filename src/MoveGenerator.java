@@ -171,7 +171,7 @@ public class MoveGenerator {
         }
     }
 
-    private boolean isInCheck(BitBoard board, boolean white){
+    public boolean isInCheck(BitBoard board, boolean white){
         // board info
         int kingSq = white ? Long.numberOfTrailingZeros(board.getWhiteKing()) : Long.numberOfTrailingZeros(board.getBlackKing());
         long occupied = board.allPieces();
