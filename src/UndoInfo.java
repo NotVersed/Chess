@@ -2,5 +2,6 @@ public record UndoInfo(
     int move,
     PieceType capturedPiece,
     boolean capturedWasWhite,
-    int prevEnPassantSquare
+    int prevEnPassantSquare,
+    CastlingRights prevCastlingRights
 ) {}

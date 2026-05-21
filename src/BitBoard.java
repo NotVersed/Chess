@@ -18,6 +18,9 @@ public class BitBoard {
 
     private int enPassantSquare;
 
+    // castling rights
+    private CastlingRights castlingRights;
+
     public BitBoard() {
         initializeStartingPosition();
     }
@@ -64,6 +67,8 @@ public class BitBoard {
         blackKing = 1L << 60;
 
         enPassantSquare = -1;
+
+        castlingRights = new CastlingRights(true, true, true, true);
     }
 
     public UndoInfo applyMove(int move) {
@@ -78,6 +83,20 @@ public class BitBoard {
             clearSquare(capturedPawnSquare);
         } else {
             captured = getPieceAt(to);
+        }
+        CastlingRights prevCastlingRights = castlingRights;
+        if (moving.type() == PieceType.KING) {
+            castlingRights = moving.white() ? castlingRights.withoutWhite() : castlingRights.withoutBlack();
+        } else if (moving.type() == PieceType.ROOK) {
+            if (moving.white()) {
+                // kingside rook on 7
+                castlingRights = (from == 7) ? castlingRights.withoutWhiteKingside()
+                        : castlingRights.withoutWhiteQueenside();
+            } else {
+                // kingside rook on 63
+                castlingRights = (from == 63) ? castlingRights.withoutBlackKingside()
+                        : castlingRights.withoutBlackQueenside();
+            }
         }
 
         // save captured piece info for undo
@@ -101,6 +120,27 @@ public class BitBoard {
             setPiece(to, moving.type(), moving.white());
         }
 
+        // handle castling - move the rook
+        if (Move.type(move) == Move.CASTLING) {
+            if (moving.white()) {
+                if (to == 6) { // kingside
+                    clearSquare(7);
+                    setPiece(5, PieceType.ROOK, true);
+                } else { // queenside
+                    clearSquare(0);
+                    setPiece(3, PieceType.ROOK, true);
+                }
+            } else {
+                if (to == 62) { // kingside
+                    clearSquare(63);
+                    setPiece(61, PieceType.ROOK, false);
+                } else { // queenside
+                    clearSquare(56);
+                    setPiece(59, PieceType.ROOK, false);
+                }
+            }
+        }
+
         int prevEnPassantSquare = enPassantSquare;
         if ((moving.type() == PieceType.PAWN) && (Math.abs(from - to) == 16)) {
             enPassantSquare = (from + to) / 2;
@@ -108,7 +148,7 @@ public class BitBoard {
             enPassantSquare = -1;
         }
 
-        return new UndoInfo(move, capturedType, capturedWasWhite, prevEnPassantSquare);
+        return new UndoInfo(move, capturedType, capturedWasWhite, prevEnPassantSquare, prevCastlingRights);
     }
 
     public void undoMove(UndoInfo undo) {
@@ -117,8 +157,6 @@ public class BitBoard {
         // get the 2 move squares
         int from = Move.from(move);
         int to = Move.to(move);
-        System.out.println("undoMove: move=" + Move.from(move) + "->" + Move.to(move) + " type=" + Move.type(move));
-        System.out.println("piece at to square: " + getPieceAt(Move.to(move)));
         // record piece information
         PieceInfo movingPiece = getPieceAt(to);
 
@@ -132,6 +170,28 @@ public class BitBoard {
         // clear the square the piece was on
         clearSquare(to);
 
+        // handle castling - restore the rook
+        if (Move.type(move) == Move.CASTLING) {
+            boolean white = movingPiece.white();
+            if (white) {
+                if (to == 6) { // kingside
+                    clearSquare(5);
+                    setPiece(7, PieceType.ROOK, true);
+                } else { // queenside
+                    clearSquare(3);
+                    setPiece(0, PieceType.ROOK, true);
+                }
+            } else {
+                if (to == 62) { // kingside
+                    clearSquare(61);
+                    setPiece(63, PieceType.ROOK, false);
+                } else { // queenside
+                    clearSquare(59);
+                    setPiece(56, PieceType.ROOK, false);
+                }
+            }
+        }
+
         // replace captured piece if it existed
         if (undo.capturedPiece() != null) {
             if (Move.type(move) == Move.EN_PASSANT) {
@@ -144,6 +204,8 @@ public class BitBoard {
 
         // restore en passant square
         enPassantSquare = undo.prevEnPassantSquare();
+
+        castlingRights = undo.prevCastlingRights();
 
     }
 
@@ -271,6 +333,10 @@ public class BitBoard {
 
     public int getEnPassantSquare() {
         return enPassantSquare;
+    }
+
+    public CastlingRights getCastlingRights() {
+        return castlingRights;
     }
 
     public PieceInfo getPieceAt(int index) {

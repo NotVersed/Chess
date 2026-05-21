@@ -20,15 +20,18 @@ public class MoveGenerator {
         generateBishopMoves(white, moves);
         generateQueenMoves(white, moves);
         generatePawnMoves(white, moves);
+        generateCastlingMoves(white, moves);
 
         // apply and see if checks the king and undo
-        // iterating backwards also works and is slightly faster but I wanted to use a feature I haven't used before
+        // iterating backwards also works and is slightly faster but I wanted to use a
+        // feature I haven't used before
         // for (int i = moves.size() - 1; i >= 0; i--) { ... }
         Iterator<Integer> it = moves.iterator();
-        while(it.hasNext()){
+        while (it.hasNext()) {
             int move = it.next();
             UndoInfo undo = board.applyMove(move);
-            if(isInCheck(board, white)) it.remove();
+            if (isInCheck(board, white))
+                it.remove();
             board.undoMove(undo);
         }
 
@@ -159,6 +162,57 @@ public class MoveGenerator {
 
         }
     }
+
+    private void generateCastlingMoves(boolean white, List<Integer> moves) {
+        if (isInCheck(board, white))
+            return;
+
+        if (white) {
+            if (board.getCastlingRights().whiteKingside()) {
+                long mask = (1L << 5) | (1L << 6);
+                if ((mask & board.allPieces()) == 0) {
+                    // check king doesn't pass through check
+                    UndoInfo undo = board.applyMove(Move.encode(4, 5, Move.NORMAL));
+                    boolean passesThroughCheck = isInCheck(board, white);
+                    board.undoMove(undo);
+                    if (!passesThroughCheck)
+                        moves.add(Move.encode(4, 6, Move.CASTLING));
+                }
+            }
+            if (board.getCastlingRights().whiteQueenside()) {
+                long mask = (1L << 1) | (1L << 2) | (1L << 3);
+                if ((mask & board.allPieces()) == 0) {
+                    UndoInfo undo = board.applyMove(Move.encode(4, 3, Move.NORMAL));
+                    boolean passesThroughCheck = isInCheck(board, white);
+                    board.undoMove(undo);
+                    if (!passesThroughCheck)
+                        moves.add(Move.encode(4, 2, Move.CASTLING));
+                }
+            }
+        } else {
+            if (board.getCastlingRights().blackKingside()) {
+                long mask = (1L << 61) | (1L << 62);
+                if ((mask & board.allPieces()) == 0) {
+                    UndoInfo undo =  board.applyMove(Move.encode(60, 61, Move.NORMAL));
+                    boolean passesThroughCheck = isInCheck(board, white);
+                    board.undoMove(undo);
+                    if (!passesThroughCheck)
+                        moves.add(Move.encode(60, 62, Move.CASTLING));
+                }
+            }
+            if (board.getCastlingRights().blackQueenside()) {
+                long mask = (1L << 57) | (1L << 58) | (1L << 59);
+                if ((mask & board.allPieces()) == 0) {
+                    UndoInfo undo =  board.applyMove(Move.encode(60, 59, Move.NORMAL));
+                    boolean passesThroughCheck = isInCheck(board, white);
+                    board.undoMove(undo);
+                    if (!passesThroughCheck)
+                        moves.add(Move.encode(60, 58, Move.CASTLING));
+                }
+            }
+        }
+    }
+
     private void addPawnMove(int from, int target, int type, boolean white, List<Integer> moves) {
         int backRank = white ? 7 : 0;
         if (type == Move.NORMAL && target / 8 == backRank) {
@@ -171,14 +225,15 @@ public class MoveGenerator {
         }
     }
 
-    public boolean isInCheck(BitBoard board, boolean white){
+    public boolean isInCheck(BitBoard board, boolean white) {
         // board info
-        int kingSq = white ? Long.numberOfTrailingZeros(board.getWhiteKing()) : Long.numberOfTrailingZeros(board.getBlackKing());
+        int kingSq = white ? Long.numberOfTrailingZeros(board.getWhiteKing())
+                : Long.numberOfTrailingZeros(board.getBlackKing());
         long occupied = board.allPieces();
         long friendly = white ? board.whitePieces() : board.blackPieces();
 
-
-        // place imaginary piece on king square and see if it can see another piece of its kind
+        // place imaginary piece on king square and see if it can see another piece of
+        // its kind
         long enemyRooks = white ? board.getBlackRooks() : board.getWhiteRooks();
         long enemyBishops = white ? board.getBlackBishops() : board.getWhiteBishops();
         long enemyQueens = white ? board.getBlackQueens() : board.getWhiteQueens();
@@ -186,11 +241,16 @@ public class MoveGenerator {
         long enemyPawns = white ? board.getBlackPawns() : board.getWhitePawns();
         long enemyKing = white ? board.getBlackKing() : board.getWhiteKing();
         long pawnAttacks = white ? AttackTables.WHITE_PAWN_ATTACKS[kingSq] : AttackTables.BLACK_PAWN_ATTACKS[kingSq];
-        if((AttackTables.rookAttacks(kingSq, occupied, friendly) & (enemyRooks | enemyQueens)) != 0) return true;
-        if((AttackTables.bishopAttacks(kingSq, occupied, friendly) & (enemyBishops | enemyQueens)) != 0) return true;
-        if((AttackTables.KNIGHT_ATTACKS[kingSq] & enemyKnights) != 0) return true;
-        if((pawnAttacks & enemyPawns) != 0) return true;
-        if ((AttackTables.KING_ATTACKS[kingSq] & enemyKing) != 0) return true;
+        if ((AttackTables.rookAttacks(kingSq, occupied, friendly) & (enemyRooks | enemyQueens)) != 0)
+            return true;
+        if ((AttackTables.bishopAttacks(kingSq, occupied, friendly) & (enemyBishops | enemyQueens)) != 0)
+            return true;
+        if ((AttackTables.KNIGHT_ATTACKS[kingSq] & enemyKnights) != 0)
+            return true;
+        if ((pawnAttacks & enemyPawns) != 0)
+            return true;
+        if ((AttackTables.KING_ATTACKS[kingSq] & enemyKing) != 0)
+            return true;
 
         return false;
     }
