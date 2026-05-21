@@ -88,9 +88,8 @@ public class BitBoard {
         clearSquare(from);
         clearSquare(to);
 
-        // place piece on destination
-        int backRank = moving.white() ? 7 : 0;
-        if ((moving.type() == PieceType.PAWN) && ((to / 8) == backRank)) {
+        // place piece
+        if (Move.type(move) == Move.PROMOTION) {
             int promotionPiece = Move.promotionPiece(move);
             switch (promotionPiece) {
                 case Move.PROMOTE_QUEEN -> setPiece(to, PieceType.QUEEN, moving.white());
@@ -113,11 +112,13 @@ public class BitBoard {
     }
 
     public void undoMove(UndoInfo undo) {
+
         int move = undo.move();
         // get the 2 move squares
         int from = Move.from(move);
         int to = Move.to(move);
-
+        System.out.println("undoMove: move=" + Move.from(move) + "->" + Move.to(move) + " type=" + Move.type(move));
+        System.out.println("piece at to square: " + getPieceAt(Move.to(move)));
         // record piece information
         PieceInfo movingPiece = getPieceAt(to);
 
@@ -134,7 +135,7 @@ public class BitBoard {
         // replace captured piece if it existed
         if (undo.capturedPiece() != null) {
             if (Move.type(move) == Move.EN_PASSANT) {
-                int capturedPawnSq = undo.capturedWasWhite() ? to - 8 : to + 8;
+                int capturedPawnSq = undo.capturedWasWhite() ? to + 8 : to - 8;
                 setPiece(capturedPawnSq, undo.capturedPiece(), undo.capturedWasWhite());
             } else {
                 setPiece(to, undo.capturedPiece(), undo.capturedWasWhite());

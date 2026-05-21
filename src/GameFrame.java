@@ -25,6 +25,14 @@ public class GameFrame extends JFrame {
             PANEL.refreshTiles();
             PANEL.refreshPieces();
         });
+        if (engine.isEngineTurn()) {
+            SwingUtilities.invokeLater(() -> {
+                int move = engine.findBestMove();
+                controller.tryMove(move);
+                PANEL.refreshTiles();
+                PANEL.refreshPieces();
+            });
+        }
     }
 
 }

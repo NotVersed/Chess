@@ -1,5 +1,6 @@
 import java.awt.Point;
 import java.awt.event.*;
+import java.util.List;
 import javax.swing.*;
 
 public class MouseListener extends MouseAdapter {
@@ -39,8 +40,17 @@ public class MouseListener extends MouseAdapter {
         int targetSquare = parent.screenToSquare(p);
 
         if (originSquare != -1 && targetSquare != -1) {
-            int move = Move.encode(originSquare, targetSquare, Move.NORMAL);
-            parent.getController().tryMove(move);
+            List<Integer> legalMoves = parent.getController().getLegalMoves();
+            int matchedMove = -1;
+            for (int legalMove : legalMoves) {
+                if (Move.from(legalMove) == originSquare && Move.to(legalMove) == targetSquare) {
+                    matchedMove = legalMove;
+                    break;
+                }
+            }
+            if (matchedMove != -1) {
+                parent.getController().tryMove(matchedMove);
+            }
         }
         parent.clearLegalMoves();
         parent.refreshPieces();

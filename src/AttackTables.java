@@ -67,7 +67,7 @@ public final class AttackTables {
                 if (black_target >= 0 && black_target < 64) {
                     int targetFile = black_target % 8;
                     if (Math.abs(srcFile - targetFile) <= 1) {
-                        black_attacks |= (1L << white_target);
+                        black_attacks |= (1L << black_target);
                     }
                 }
             }
