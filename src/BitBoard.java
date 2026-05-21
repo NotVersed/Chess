@@ -16,6 +16,8 @@ public class BitBoard {
     private long blackQueens;
     private long blackKing;
 
+    private int enPassantSquare;
+
     public BitBoard() {
         initializeStartingPosition();
     }
@@ -60,6 +62,8 @@ public class BitBoard {
 
         whiteKing = 1L << 4;
         blackKing = 1L << 60;
+
+        enPassantSquare = -1;
     }
 
     public UndoInfo applyMove(int move) {
@@ -80,7 +84,39 @@ public class BitBoard {
         // place piece on destination
         setPiece(to, moving.type(), moving.white());
 
-        return new UndoInfo(move, capturedType, capturedWasWhite, -1);
+        int prevEnPassantSquare = enPassantSquare;
+        if((moving.type() == PieceType.PAWN) && (Math.abs(from - to) == 16)){
+            enPassantSquare = (from + to) / 2;
+        }
+        else{
+            enPassantSquare = -1;
+        }
+
+        return new UndoInfo(move, capturedType, capturedWasWhite, prevEnPassantSquare);
+    }
+
+    public void undoMove(UndoInfo undo){
+        // get the 2 move squares
+        int from = Move.from(undo.move());
+        int to = Move.to(undo.move());
+
+        // record piece information
+        PieceInfo movingPiece = getPieceAt(to);
+
+        // set the moving piece back to where it was from
+        setPiece(from, movingPiece.type(), movingPiece.white());
+
+        //clear the square the piece was on
+        clearSquare(to);
+
+        // replace captured piece if it existed
+        if(undo.capturedPiece() != null){
+            setPiece(to, undo.capturedPiece(), undo.capturedWasWhite());
+        }
+
+        // restore en passant square
+        enPassantSquare = undo.prevEnPassantSquare();
+
     }
 
     private void setPiece(int square, PieceType type, boolean white) {
@@ -203,6 +239,10 @@ public class BitBoard {
 
     public long getBlackKing() {
         return blackKing;
+    }
+
+    public int getEnPassantSquare(){
+        return enPassantSquare;
     }
 
     public PieceInfo getPieceAt(int index) {
