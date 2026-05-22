@@ -12,7 +12,7 @@ A fully playable chess application built in Java with a custom Swing GUI and a b
 - Configurable engine difficulty (Easy/Medium/Hard) via search depth
 - Side selection — play as white or black
 
-## Technical Highlights (some yet to be implemented but will be)
+## Technical Highlights
 - **Bitboards** — each piece type stored as a `long`, enabling O(1) board queries and fast position evaluation using `Long.bitCount`
 - **Move encoding** — moves packed into a single `int` (source: bits 0-5, destination: bits 6-11, type: bits 12-13, promotion: bits 14-15)
 - **Minimax + Alpha-Beta** — engine searches N moves ahead, pruning branches that can't influence the result
