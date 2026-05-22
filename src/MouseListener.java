@@ -17,7 +17,14 @@ public class MouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
         BoardPanel parent = (BoardPanel) PIECE.getParent();
         Controller controller = parent.getController();
+        if (controller.isGameOver())
+            return;
         Point p = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), parent);
+        int square = parent.screenToSquare(p);
+        PieceInfo piece = parent.getBoard().getPieceAt(square);
+
+        // don't allow dragging if it's not this piece's turn
+        if (piece == null || piece.white() != controller.whiteTurn() || piece.white() != parent.isHumanWhite()) return;
         originSquare = parent.screenToSquare(p);
         offsetX = e.getX();
         offsetY = e.getY();
@@ -27,12 +34,14 @@ public class MouseListener extends MouseAdapter {
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        if (originSquare == -1) return;
         Point mousePoint = SwingUtilities.convertPoint(this.PIECE, e.getPoint(), PIECE.getParent());
         PIECE.setLocation(mousePoint.x - offsetX, mousePoint.y - offsetY);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        if (originSquare == -1) return;
         BoardPanel parent = (BoardPanel) PIECE.getParent();
         parent.setLayer(PIECE, JLayeredPane.PALETTE_LAYER);
 
@@ -49,13 +58,20 @@ public class MouseListener extends MouseAdapter {
                 }
             }
             if (matchedMove != -1) {
-                parent.getController().tryMove(matchedMove);
+                boolean moveMade = parent.getController().tryMove(matchedMove);
+                parent.clearLegalMoves();
+                parent.refreshPieces();
+                if (moveMade)
+                    parent.onMoveMade();
+                originSquare = -1;
+                offsetX = 0;
+                offsetY = 0;
+                return;
             }
         }
+        // no valid move made — just refresh position
         parent.clearLegalMoves();
         parent.refreshPieces();
-        parent.onMoveMade();
-
         originSquare = -1;
         offsetX = 0;
         offsetY = 0;

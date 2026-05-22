@@ -147,4 +147,8 @@ public class BoardPanel extends JLayeredPane {
     public Controller getController() {
         return this.CONTROLLER;
     }
+
+    public boolean isHumanWhite() {
+        return !ENGINE.isPlayingAsWhite();
+    }
 }

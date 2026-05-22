@@ -76,6 +76,11 @@ public class BitBoard {
         int to = Move.to(move);
 
         PieceInfo moving = getPieceAt(from);
+        if (moving == null) {
+            System.out.println(
+                    "APPLYMOVE ERROR: no piece at from=" + from + " move=" + move + " type=" + Move.type(move));
+            return new UndoInfo(move, null, false, enPassantSquare, castlingRights);
+        }
         PieceInfo captured;
         if (Move.type(move) == Move.EN_PASSANT) {
             int capturedPawnSquare = moving.white() ? to - 8 : to + 8;
@@ -159,6 +164,12 @@ public class BitBoard {
         int to = Move.to(move);
         // record piece information
         PieceInfo movingPiece = getPieceAt(to);
+        if (movingPiece == null) {
+            System.out.println("UNDOMOVE ERROR: no piece at to=" + to + " from=" + from + " type=" + Move.type(move));
+            enPassantSquare = undo.prevEnPassantSquare();
+            castlingRights = undo.prevCastlingRights();
+            return;
+        }
 
         // set the moving piece back to where it was from
         if (Move.type(move) == Move.PROMOTION) {
@@ -172,6 +183,7 @@ public class BitBoard {
 
         // handle castling - restore the rook
         if (Move.type(move) == Move.CASTLING) {
+
             boolean white = movingPiece.white();
             if (white) {
                 if (to == 6) { // kingside

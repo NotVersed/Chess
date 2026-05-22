@@ -170,44 +170,27 @@ public class MoveGenerator {
         if (white) {
             if (board.getCastlingRights().whiteKingside()) {
                 long mask = (1L << 5) | (1L << 6);
-                if ((mask & board.allPieces()) == 0) {
-                    // check king doesn't pass through check
-                    UndoInfo undo = board.applyMove(Move.encode(4, 5, Move.NORMAL));
-                    boolean passesThroughCheck = isInCheck(board, white);
-                    board.undoMove(undo);
-                    if (!passesThroughCheck)
-                        moves.add(Move.encode(4, 6, Move.CASTLING));
+                if ((mask & board.allPieces()) == 0 && !isSquareAttacked(5, false)) {
+                    moves.add(Move.encode(4, 6, Move.CASTLING));
                 }
             }
             if (board.getCastlingRights().whiteQueenside()) {
                 long mask = (1L << 1) | (1L << 2) | (1L << 3);
-                if ((mask & board.allPieces()) == 0) {
-                    UndoInfo undo = board.applyMove(Move.encode(4, 3, Move.NORMAL));
-                    boolean passesThroughCheck = isInCheck(board, white);
-                    board.undoMove(undo);
-                    if (!passesThroughCheck)
-                        moves.add(Move.encode(4, 2, Move.CASTLING));
+                if ((mask & board.allPieces()) == 0 && !isSquareAttacked(3, false)) {
+                    moves.add(Move.encode(4, 2, Move.CASTLING));
                 }
             }
         } else {
             if (board.getCastlingRights().blackKingside()) {
                 long mask = (1L << 61) | (1L << 62);
-                if ((mask & board.allPieces()) == 0) {
-                    UndoInfo undo =  board.applyMove(Move.encode(60, 61, Move.NORMAL));
-                    boolean passesThroughCheck = isInCheck(board, white);
-                    board.undoMove(undo);
-                    if (!passesThroughCheck)
-                        moves.add(Move.encode(60, 62, Move.CASTLING));
+                if ((mask & board.allPieces()) == 0 && !isSquareAttacked(61, true)) {
+                    moves.add(Move.encode(60, 62, Move.CASTLING));
                 }
             }
             if (board.getCastlingRights().blackQueenside()) {
                 long mask = (1L << 57) | (1L << 58) | (1L << 59);
-                if ((mask & board.allPieces()) == 0) {
-                    UndoInfo undo =  board.applyMove(Move.encode(60, 59, Move.NORMAL));
-                    boolean passesThroughCheck = isInCheck(board, white);
-                    board.undoMove(undo);
-                    if (!passesThroughCheck)
-                        moves.add(Move.encode(60, 58, Move.CASTLING));
+                if ((mask & board.allPieces()) == 0 && !isSquareAttacked(59, true)) {
+                    moves.add(Move.encode(60, 58, Move.CASTLING));
                 }
             }
         }
@@ -223,6 +206,32 @@ public class MoveGenerator {
         } else {
             moves.add(Move.encode(from, target, type));
         }
+    }
+
+    // instead of applyMove, just check if the pass-through square is attacked
+    private boolean isSquareAttacked(int square, boolean byWhite) {
+        long occupied = board.allPieces();
+        long friendly = byWhite ? board.whitePieces() : board.blackPieces();
+
+        long enemyRooks = byWhite ? board.getWhiteRooks() : board.getBlackRooks();
+        long enemyBishops = byWhite ? board.getWhiteBishops() : board.getBlackBishops();
+        long enemyQueens = byWhite ? board.getWhiteQueens() : board.getBlackQueens();
+        long enemyKnights = byWhite ? board.getWhiteKnights() : board.getBlackKnights();
+        long enemyPawns = byWhite ? board.getWhitePawns() : board.getBlackPawns();
+        long enemyKing = byWhite ? board.getWhiteKing() : board.getBlackKing();
+        long pawnAttacks = byWhite ? AttackTables.WHITE_PAWN_ATTACKS[square] : AttackTables.BLACK_PAWN_ATTACKS[square];
+
+        if ((AttackTables.rookAttacks(square, occupied, friendly) & (enemyRooks | enemyQueens)) != 0)
+            return true;
+        if ((AttackTables.bishopAttacks(square, occupied, friendly) & (enemyBishops | enemyQueens)) != 0)
+            return true;
+        if ((AttackTables.KNIGHT_ATTACKS[square] & enemyKnights) != 0)
+            return true;
+        if ((pawnAttacks & enemyPawns) != 0)
+            return true;
+        if ((AttackTables.KING_ATTACKS[square] & enemyKing) != 0)
+            return true;
+        return false;
     }
 
     public boolean isInCheck(BitBoard board, boolean white) {
